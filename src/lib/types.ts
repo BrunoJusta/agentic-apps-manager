@@ -50,6 +50,8 @@ export interface AgenticApp {
   id: string
   name: string
   shortDescription: string
+  /** Ícone quadrado (1:1) como data URL, até 256x256. */
+  icon: string
   description: string
   area: string
   priority: PriorityKey
@@ -60,7 +62,6 @@ export interface AgenticApp {
   developers: Person[]
   supportL1: Person[]
   supportL2: Person[]
-  itContact: Person
   startDate: string
   goLiveDate: string
   activeUsers: number | null

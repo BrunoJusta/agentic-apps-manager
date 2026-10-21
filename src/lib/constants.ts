@@ -109,6 +109,7 @@ export function emptyApp(): AppInput {
   return {
     name: '',
     shortDescription: '',
+    icon: '',
     description: '',
     area: '',
     priority: 'media',
@@ -119,7 +120,6 @@ export function emptyApp(): AppInput {
     developers: [],
     supportL1: [],
     supportL2: [],
-    itContact: { name: '', email: '' },
     startDate: '',
     goLiveDate: '',
     activeUsers: null,

@@ -27,9 +27,9 @@ export function normalizeApp(id: string, raw: Record<string, unknown>): AgenticA
     ...base,
     ...r,
     id,
+    icon: typeof r.icon === 'string' && r.icon.startsWith('data:image/') ? r.icon : '',
     businessOwner: asPerson(r.businessOwner),
     aiLead: asPerson(r.aiLead),
-    itContact: asPerson(r.itContact),
     developers: asPeople(r.developers),
     supportL1: asPeople(r.supportL1),
     supportL2: asPeople(r.supportL2),
@@ -87,6 +87,7 @@ export function productionReadiness(app: Pick<AgenticApp, 'businessOwner' | 'aiL
 
 const FIELD_LABELS: Record<string, string> = {
   name: 'nome',
+  icon: 'ícone',
   shortDescription: 'descrição curta',
   description: 'descrição',
   area: 'área',
@@ -98,7 +99,6 @@ const FIELD_LABELS: Record<string, string> = {
   developers: 'devs',
   supportL1: 'suporte N1',
   supportL2: 'suporte N2',
-  itContact: 'contacto IT',
   startDate: 'data de início',
   goLiveDate: 'data de go-live',
   activeUsers: 'utilizadores ativos',
@@ -147,7 +147,7 @@ export function personMatches(p: Person, email: string) {
 }
 
 export function isMember(app: AgenticApp, email: string) {
-  return [app.businessOwner, app.aiLead, app.itContact, ...app.developers, ...app.supportL1, ...app.supportL2].some((p) => personMatches(p, email))
+  return [app.businessOwner, app.aiLead, ...app.developers, ...app.supportL1, ...app.supportL2].some((p) => personMatches(p, email))
 }
 
 /** Dias até uma data ISO (yyyy-mm-dd). Negativo se já passou. */

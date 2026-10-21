@@ -22,6 +22,37 @@ export function PriorityIcon({ priority }: { priority: AgenticApp['priority'] })
   return null
 }
 
+/** Ícone da app: sempre quadrado 1:1. Sem imagem, mostra as iniciais na cor da área. */
+export function AppIcon({ app, size = 36, className }: { app: Pick<AgenticApp, 'name' | 'icon' | 'area'>; size?: number; className?: string }) {
+  const radius = Math.round(size * 0.24)
+  if (app.icon) {
+    return <img src={app.icon} alt="" width={size} height={size} className={clsx('shrink-0 object-cover shadow-ring', className)} style={{ width: size, height: size, borderRadius: radius }} />
+  }
+  const initials = (app.name || '?')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('')
+  const c = areaColor(app.area)
+  return (
+    <span
+      aria-hidden
+      className={clsx('inline-flex shrink-0 items-center justify-center font-display font-semibold shadow-ring', className)}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius,
+        fontSize: Math.round(size * 0.36),
+        background: c ? `color-mix(in srgb, ${c} 14%, var(--surface-1))` : 'var(--surface-2)',
+        color: c ? `color-mix(in srgb, ${c} 80%, var(--ink))` : 'var(--ink-muted)',
+      }}
+    >
+      {initials}
+    </span>
+  )
+}
+
 /** Cor da entidade de um cartão: a área (cadeia de valor). */
 export const appColor = (app: AgenticApp) => areaColor(app.area)
 
@@ -31,8 +62,9 @@ export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; sec
   return (
     <>
       <div className="cbody">
-        <div className="flex items-start gap-2">
-          <h3 className="min-w-0 flex-1 text-ink">{app.name || 'Sem nome'}</h3>
+        <div className="flex items-start gap-3">
+          <AppIcon app={app} size={32} />
+          <h3 className="min-w-0 flex-1 self-center text-ink">{app.name || 'Sem nome'}</h3>
           <span className="mt-1">
             <PriorityIcon priority={app.priority} />
           </span>

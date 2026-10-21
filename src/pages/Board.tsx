@@ -65,10 +65,10 @@ function DraggableCard({ app, secrets, index, disabled, animate }: { app: Agenti
 function DroppableColumn({ col, count, droppable, children, onAdd }: { col: Column; count: number; droppable: boolean; children: React.ReactNode; onAdd?: () => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key, disabled: !droppable })
   return (
-    <section aria-label={`${col.label}, ${count} apps`} className="flex min-w-[248px] flex-1 basis-0 flex-col">
+    <section aria-label={`${col.label}, ${count} apps`} className="flex min-w-[200px] flex-1 basis-0 flex-col">
       <header className="flex h-10 items-center gap-2 px-1.5">
         {col.color ? <Dot color={col.color} /> : null}
-        <h2 className="font-display text-[13.5px] font-semibold tracking-[-0.01em] text-ink" title={col.hint}>
+        <h2 className="min-w-0 truncate font-display text-[13.5px] font-semibold tracking-[-0.01em] whitespace-nowrap text-ink" title={col.hint ?? col.label}>
           {col.label}
         </h2>
         <span className="rounded-full bg-surface-3 px-1.5 py-px font-mono text-[11px] text-ink-subtle tabular">{count}</span>
@@ -276,7 +276,7 @@ export function AppsPage() {
       {loading ? (
         <div className="flex gap-3 overflow-hidden py-1" aria-label="A carregar o board" role="status">
           {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex min-w-[248px] flex-1 basis-0 flex-col gap-2">
+            <div key={i} className="flex min-w-[200px] flex-1 basis-0 flex-col gap-2">
               <Skeleton className="h-5 w-28" />
               <Skeleton className="h-32" />
               <Skeleton className="h-28" />

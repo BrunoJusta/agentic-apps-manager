@@ -7,6 +7,7 @@ import { useVault } from '../context/VaultContext'
 import { matchesSearch } from '../lib/app-utils'
 import { statusLabel } from '../lib/constants'
 import { Kbd } from './ui'
+import { AppIcon } from './AppCard'
 
 interface Item {
   id: string
@@ -14,6 +15,7 @@ interface Item {
   title: string
   subtitle: string
   to: string
+  app?: { name: string; icon: string; area: string }
 }
 
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -43,7 +45,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     const out: Item[] = apps
       .filter((a) => matchesSearch(a, s))
       .slice(0, 8)
-      .map((a) => ({ id: `a-${a.id}`, kind: 'app', title: a.name, subtitle: `${statusLabel(a.status)}${a.shortDescription ? `, ${a.shortDescription}` : ''}`, to: `/apps/${a.id}` }))
+      .map((a) => ({ id: `a-${a.id}`, kind: 'app', title: a.name, subtitle: `${statusLabel(a.status)}${a.shortDescription ? `, ${a.shortDescription}` : ''}`, to: `/apps/${a.id}`, app: { name: a.name, icon: a.icon, area: a.area } }))
     if (s) {
       for (const sec of secrets) {
         if (out.length > 30) break
@@ -140,7 +142,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                   className={clsx('flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2', i === active ? 'bg-surface-2' : '')}
                 >
                   <span aria-hidden className={clsx('shrink-0', it.kind === 'secret' ? 'text-accent-text' : 'text-ink-subtle')}>
-                    {icon(it.kind)}
+                    {it.app ? <AppIcon app={it.app} size={22} /> : icon(it.kind)}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className={clsx('block truncate text-sm text-ink', it.kind !== 'app' && 'font-mono text-[13px]')}>{it.title}</span>

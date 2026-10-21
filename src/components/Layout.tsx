@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
-import { Cube, LockKeyOpen, MagnifyingGlass, SignOut } from '@phosphor-icons/react'
+import { Archive, Cube, Kanban, LockKey, LockKeyOpen, MagnifyingGlass, SignOut, Users } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { useVault } from '../context/VaultContext'
 import { roleLabel } from '../lib/constants'
@@ -17,18 +17,21 @@ export function BrandMark({ className }: { className?: string }) {
   )
 }
 
-function TopTab({ to, children, end }: { to: string; children: ReactNode; end?: boolean }) {
+function TopTab({ to, children, end, icon }: { to: string; children: ReactNode; end?: boolean; icon: ReactNode }) {
   return (
     <NavLink
       to={to}
       end={end}
       className={({ isActive }) =>
         clsx(
-          'relative flex h-full shrink-0 items-center px-3 font-display text-[13.5px] font-medium transition-colors duration-150',
+          'relative flex h-full shrink-0 items-center gap-1.5 px-3 font-display text-[13.5px] font-medium transition-colors duration-150',
           isActive ? 'text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ink' : 'text-ink-subtle hover:text-ink',
         )
       }
     >
+      <span aria-hidden className="flex">
+        {icon}
+      </span>
       {children}
     </NavLink>
   )
@@ -97,12 +100,22 @@ export function Layout() {
 
   const tabs = (
     <>
-      <TopTab to="/" end>
+      <TopTab to="/" end icon={<Kanban size={15} />}>
         Apps
       </TopTab>
-      <TopTab to="/finalizadas">Finalizadas</TopTab>
-      {canEdit ? <TopTab to="/cofre">Cofre</TopTab> : null}
-      {isAdmin ? <TopTab to="/utilizadores">Utilizadores</TopTab> : null}
+      <TopTab to="/finalizadas" icon={<Archive size={15} />}>
+        Finalizadas
+      </TopTab>
+      {canEdit ? (
+        <TopTab to="/cofre" icon={<LockKey size={15} />}>
+          Cofre
+        </TopTab>
+      ) : null}
+      {isAdmin ? (
+        <TopTab to="/utilizadores" icon={<Users size={15} />}>
+          Utilizadores
+        </TopTab>
+      ) : null}
     </>
   )
 

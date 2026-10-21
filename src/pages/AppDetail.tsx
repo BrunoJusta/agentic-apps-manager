@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
 import {
+  Info,
+  HardDrives,
+  UsersThree,
+  ShieldCheck,
   ArrowLeft,
   Copy,
   ArrowSquareOut,
@@ -26,15 +30,15 @@ import type { AgenticApp, EnvKey, HistoryEntry, Person, StatusKey } from '../lib
 import { Avatar, Badge, Button, ConfirmDialog, EmptyState, Gauge, IconButton, Panel, Segmented, Skeleton } from '../components/ui'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
 import { FilterChip } from '../components/FiltersBar'
-import { PriorityIcon, rotationDue } from '../components/AppCard'
+import { AppIcon, PriorityIcon, rotationDue } from '../components/AppCard'
 import { EnvPanel } from '../components/EnvPanel'
 
 const TABS = [
-  { key: 'geral', label: 'Visão geral' },
-  { key: 'ambientes', label: 'Ambientes e cofre' },
-  { key: 'pessoas', label: 'Pessoas' },
-  { key: 'governo', label: 'Governance' },
-  { key: 'historico', label: 'Histórico' },
+  { key: 'geral', label: 'Visão geral', icon: Info },
+  { key: 'ambientes', label: 'Ambientes e cofre', icon: HardDrives },
+  { key: 'pessoas', label: 'Pessoas', icon: UsersThree },
+  { key: 'governo', label: 'Governance', icon: ShieldCheck },
+  { key: 'historico', label: 'Histórico', icon: ClockCounterClockwise },
 ] as const
 type TabKey = (typeof TABS)[number]['key']
 
@@ -204,7 +208,6 @@ function People({ app }: { app: AgenticApp }) {
     ['Devs', app.developers],
     ['Suporte nível 1', app.supportL1],
     ['Suporte nível 2', app.supportL2],
-    ['Contacto de IT', [app.itContact]],
   ]
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -373,6 +376,7 @@ export function AppDetailPage() {
             Apps
           </Link>
           <div className="mt-3 flex flex-wrap items-start gap-4">
+            <AppIcon app={app} size={64} className="hidden sm:inline-flex" />
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink min-[760px]:text-[32px] min-[760px]:leading-10" style={{ viewTransitionName: `app-${app.id}` }}>
                 {app.name}
@@ -430,7 +434,10 @@ export function AppDetailPage() {
                   tab === t.key ? 'text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ink first:after:left-0' : 'text-ink-subtle hover:text-ink',
                 )}
               >
-                {t.label}
+                <span className="flex items-center gap-1.5">
+                  <t.icon size={15} aria-hidden />
+                  {t.label}
+                </span>
               </button>
             ))}
           </div>

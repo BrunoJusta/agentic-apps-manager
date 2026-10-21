@@ -6,7 +6,7 @@ import { ENVS, maturityLabel, priorityLabel, repoAccountLabel, STATUSES, statusL
 import { priorityRank } from '../lib/app-utils'
 import { fmtDate, fmtNumber, fmtRelative, toDate } from '../lib/format'
 import type { AgenticApp } from '../lib/types'
-import { PriorityIcon } from '../components/AppCard'
+import { AppIcon, PriorityIcon } from './AppCard'
 import { Badge, Dot, EmptyState } from '../components/ui'
 import { STATUS_COLORS } from '../lib/colors'
 
@@ -89,11 +89,16 @@ export function AppsTable({ apps, empty }: { apps: AgenticApp[]; empty?: React.R
               <tbody className="[&>tr]:border-t [&>tr]:border-hairline">
                 {rows.map((a) => (
                   <tr key={a.id} className="transition-colors duration-150 hover:bg-surface-2">
-                    <td className="max-w-72 py-[11px] pr-3.5 pl-4">
-                      <Link to={`/apps/${a.id}`} className="block truncate font-display font-semibold text-ink hover:underline">
-                        {a.name}
-                      </Link>
-                      {a.shortDescription ? <span className="block truncate text-[12px] text-ink-subtle">{a.shortDescription}</span> : null}
+                    <td className="max-w-80 py-[11px] pr-3.5 pl-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <AppIcon app={a} size={32} />
+                        <div className="min-w-0">
+                          <Link to={`/apps/${a.id}`} className="block truncate font-display font-semibold text-ink hover:underline">
+                            {a.name}
+                          </Link>
+                          {a.shortDescription ? <span className="block truncate text-[12px] text-ink-subtle">{a.shortDescription}</span> : null}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3.5 py-[11px] whitespace-nowrap text-ink-muted"><span className="inline-flex items-center gap-2"><Dot color={STATUS_COLORS[a.status]} />{statusLabel(a.status)}</span></td>
                     <td className="px-3.5 py-[11px]">

@@ -50,9 +50,14 @@
     --gutter: 16px;
   }
 }
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 48px;
+  }
+}
 @media (min-width: 1280px) {
   :root {
-    --gutter: 32px;
+    --gutter: 150px;
   }
 }
 

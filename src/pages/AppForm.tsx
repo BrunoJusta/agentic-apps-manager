@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { AppIcon } from '../components/AppCard'
+import { fileToSquareIcon } from '../lib/image'
 import { Link, useBlocker, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { ArrowLeft, Plus, X } from '@phosphor-icons/react'
+import { ArrowLeft, ImageSquare, Plus, X } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -44,6 +46,54 @@ function Section({ id, title, description, children }: { id: string; title: stri
       {description ? <p className="mt-1 max-w-[65ch] text-[13.5px] text-ink-subtle">{description}</p> : null}
       <div className="mt-5 flex flex-col gap-5">{children}</div>
     </section>
+  )
+}
+
+function IconPicker({ value, name, area, onChange }: { value: string; name: string; area: string; onChange: (v: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  return (
+    <div className="flex items-center gap-4">
+      <AppIcon app={{ name: name || '?', icon: value, area }} size={72} />
+      <div className="flex min-w-0 flex-col gap-2">
+        <span className="font-display text-[12px] font-medium text-ink-subtle">Ícone da app</span>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" loading={busy} onClick={() => inputRef.current?.click()}>
+            <ImageSquare size={14} aria-hidden />
+            {value ? 'Trocar ícone' : 'Carregar ícone'}
+          </Button>
+          {value ? (
+            <Button size="sm" variant="ghost" onClick={() => onChange('')}>
+              Remover
+            </Button>
+          ) : null}
+        </div>
+        <p className={err ? 'text-[12px] text-danger' : 'text-[12px] text-ink-tertiary'}>{err ?? 'Formato quadrado 1:1. Outras proporções são cortadas ao centro e reduzidas para 256×256.'}</p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="sr-only"
+          tabIndex={-1}
+          aria-label="Escolher imagem do ícone"
+          onChange={async (e) => {
+            const f = e.target.files?.[0]
+            e.target.value = ''
+            if (!f) return
+            setBusy(true)
+            setErr(null)
+            try {
+              onChange(await fileToSquareIcon(f))
+            } catch (x) {
+              setErr((x as Error).message)
+            } finally {
+              setBusy(false)
+            }
+          }}
+        />
+      </div>
+    </div>
   )
 }
 
@@ -225,6 +275,7 @@ export function AppFormPage() {
           ) : null}
 
           <Section id="identidade" title="Identidade">
+            <IconPicker value={form.icon} name={form.name} area={form.area} onChange={(icon) => up({ icon })} />
             <Field label="Nome" htmlFor="f-name" error={errors.name}>
               <Input id="f-name" value={form.name} onChange={(e) => up({ name: e.target.value })} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'f-name-error' : undefined} autoComplete="off" />
             </Field>
@@ -305,9 +356,6 @@ export function AppFormPage() {
             </Field>
             <Field label="Suporte nível 2" htmlFor="f-l2" hint="Quem resolve quando é preciso mexer no código ou na infraestrutura.">
               <PeopleInput id="f-l2" value={form.supportL2} onChange={(p) => up({ supportL2: p })} addLabel="Adicionar pessoa" />
-            </Field>
-            <Field label="Contacto de IT" htmlFor="f-it">
-              <PersonInput id="f-it" value={form.itContact} onChange={(p) => up({ itContact: p })} />
             </Field>
           </Section>
 

@@ -128,15 +128,26 @@ service cloud.firestore {
     }
 
     // ---------- apps ----------
+    // Ícone: data URL de imagem, até ~200 KB (a app grava 256x256, normalmente < 30 KB).
+    function validIcon() {
+      return !('icon' in request.resource.data)
+        || request.resource.data.icon == ''
+        || (request.resource.data.icon is string
+            && request.resource.data.icon.size() < 200000
+            && request.resource.data.icon.matches('^data:image/(png|jpeg|webp);base64,.*'));
+    }
+
     match /apps/{appId} {
       allow read: if isReader();
       allow create: if isEditor()
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 200;
+        && request.resource.data.name.size() <= 200
+        && validIcon();
       allow update: if isEditor()
         && request.resource.data.name is string
-        && request.resource.data.name.size() > 0;
+        && request.resource.data.name.size() > 0
+        && validIcon();
       allow delete: if isAdmin();
 
       match /secrets/{secretId} {

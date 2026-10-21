@@ -196,8 +196,8 @@ export function FiltersBar({ trailing }: { trailing?: ReactNode }) {
   const count = [f.maturity, f.priority, f.account, f.tag, f.mine ? '1' : ''].filter(Boolean).length
 
   return (
-    <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
-      <div className="relative w-full sm:w-44 xl:w-auto xl:max-w-60 xl:min-w-32 xl:flex-1">
+    <div className="flex flex-wrap items-center gap-2 2xl:flex-nowrap">
+      <div className="relative w-full sm:w-52 2xl:w-auto 2xl:max-w-60 2xl:min-w-32 2xl:flex-1">
         <MagnifyingGlass size={14} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-tertiary" aria-hidden />
         <input
           type="search"
