@@ -9,6 +9,7 @@ import { AppsPage } from './pages/Board'
 import { FinishedPage } from './pages/FinishedPage'
 import { AppDetailPage } from './pages/AppDetail'
 import { AppFormPage } from './pages/AppForm'
+import { RequestDetailPage } from './pages/RequestDetail'
 import { VaultPage } from './pages/VaultPage'
 import { UsersPage } from './pages/UsersPage'
 import type { ReactNode } from 'react'
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: '/apps/nova', element: <AppFormPage /> },
       { path: '/apps/:id', element: <AppDetailPage /> },
       { path: '/apps/:id/editar', element: <AppFormPage /> },
+      { path: '/apps/:id/pedidos/:reqId', element: <RequestDetailPage /> },
       { path: '/cofre', element: <VaultPage /> },
       { path: '/utilizadores', element: <AdminOnly><UsersPage /></AdminOnly> },
       { path: '*', element: <Navigate to="/" replace /> },
