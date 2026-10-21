@@ -18,12 +18,13 @@ import { DownloadSimple, Kanban, Plus, RocketLaunch, Rows, UploadSimple, CheckCi
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useVault } from '../context/VaultContext'
+import { linkedItems } from '../lib/vault-utils'
 import { useToast } from '../context/ToastContext'
 import { applyFilters, useFilters, type ViewMode } from '../lib/filters'
 import { productionReadiness, sortForBoard, toInput } from '../lib/app-utils'
 import { isFinished, MATURITIES, REPO_ACCOUNTS, STATUSES, statusLabel } from '../lib/constants'
 import { moveApp } from '../data/store'
-import type { AgenticApp, MaturityKey, SecretDoc, StatusKey } from '../lib/types'
+import type { AgenticApp, MaturityKey, StatusKey, VaultItem } from '../lib/types'
 import { PageHeader } from '../components/Layout'
 import { FiltersBar, GroupByChip } from '../components/FiltersBar'
 import { AppCardBody, AppCardLink, appColor } from '../components/AppCard'
@@ -51,7 +52,7 @@ function withTransition(fn: () => void) {
   else fn()
 }
 
-function DraggableCard({ app, secrets, index, disabled, animate }: { app: AgenticApp; secrets: SecretDoc[]; index: number; disabled: boolean; animate: boolean }) {
+function DraggableCard({ app, secrets, index, disabled, animate }: { app: AgenticApp; secrets: VaultItem[]; index: number; disabled: boolean; animate: boolean }) {
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id: app.id, disabled })
   // tiramos o role="button" do dnd-kit para o cartão continuar a ser um link
   const { role: _role, ...attrs } = attributes
@@ -117,7 +118,7 @@ function DroppableColumn({ col, count, droppable, children, onAdd }: { col: Colu
 export function AppsPage() {
   const { apps, loading, error } = useApps()
   const { canEdit, email, actor } = useAuth()
-  const { secrets } = useVault()
+  const { itemsById } = useVault()
   const { filters, set, active: filtering, clear } = useFilters()
   const toast = useToast()
   const navigate = useNavigate()
@@ -156,10 +157,10 @@ export function AppsPage() {
   }, [apps, field])
 
   const secretsByApp = useMemo(() => {
-    const m = new Map<string, SecretDoc[]>()
-    for (const s of secrets) m.set(s.appId, [...(m.get(s.appId) ?? []), s])
+    const m = new Map<string, VaultItem[]>()
+    for (const a of apps) m.set(a.id, linkedItems(a, itemsById).map((x) => x.item))
     return m
-  }, [secrets])
+  }, [apps, itemsById])
 
   // O board só mostra apps em curso; Produção e Descontinuada vivem na tab Finalizadas.
   const activeApps = useMemo(() => apps.filter((a) => !isFinished(a.status)), [apps])

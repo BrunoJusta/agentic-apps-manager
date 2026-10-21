@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { Archive, MagnifyingGlass, Rows, SquaresFour } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useVault } from '../context/VaultContext'
+import { linkedItems } from '../lib/vault-utils'
 import { matchesSearch } from '../lib/app-utils'
 import { isFinished } from '../lib/constants'
-import type { SecretDoc, StatusKey } from '../lib/types'
+import type { StatusKey, VaultItem } from '../lib/types'
 import { PageHeader } from '../components/Layout'
 import { AppCardLink } from '../components/AppCard'
 import { AppsTable } from '../components/AppsTable'
@@ -15,7 +16,7 @@ type Which = 'todas' | Extract<StatusKey, 'producao' | 'descontinuada'>
 /** Apps que já saíram do pipeline: em produção ou descontinuadas. */
 export function FinishedPage() {
   const { apps, loading } = useApps()
-  const { secrets } = useVault()
+  const { itemsById } = useVault()
   const [q, setQ] = useState('')
   const [which, setWhich] = useState<Which>('todas')
   const [view, setView] = useState<'cartoes' | 'tabela'>('cartoes')
@@ -31,10 +32,10 @@ export function FinishedPage() {
     [finished, which, q],
   )
   const secretsByApp = useMemo(() => {
-    const m = new Map<string, SecretDoc[]>()
-    for (const s of secrets) m.set(s.appId, [...(m.get(s.appId) ?? []), s])
+    const m = new Map<string, VaultItem[]>()
+    for (const a of apps) m.set(a.id, linkedItems(a, itemsById).map((x) => x.item))
     return m
-  }, [secrets])
+  }, [apps, itemsById])
 
   return (
     <>

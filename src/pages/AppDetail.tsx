@@ -22,6 +22,7 @@ import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useVault } from '../context/VaultContext'
+import { linkedItems } from '../lib/vault-utils'
 import { productionReadiness } from '../lib/app-utils'
 import { ENVS, maturityLabel, PERSONAL_DATA, priorityLabel, repoAccountLabel, STATUSES, statusLabel } from '../lib/constants'
 import { fmtDate, fmtDateTime, fmtEur, fmtNumber, fmtRelative } from '../lib/format'
@@ -293,7 +294,7 @@ export function AppDetailPage() {
   const { id } = useParams()
   const { byId, loading } = useApps()
   const { canEdit, isAdmin, actor } = useAuth()
-  const { secrets } = useVault()
+  const { itemsById } = useVault()
   const toast = useToast()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -302,8 +303,8 @@ export function AppDetailPage() {
   const app = id ? byId(id) : undefined
   const tab = (TABS.some((t) => t.key === params.get('tab')) ? params.get('tab') : 'geral') as TabKey
   const env = (['dev', 'qa', 'prod'].includes(params.get('env') ?? '') ? params.get('env') : app?.environments.prod.enabled ? 'prod' : 'dev') as EnvKey
-  const appSecrets = useMemo(() => secrets.filter((s) => s.appId === id), [secrets, id])
-  const due = rotationDue(appSecrets)
+  const appItems = useMemo(() => (app ? linkedItems(app, itemsById) : []), [app, itemsById])
+  const due = rotationDue(appItems.map((x) => x.item))
   const openReq = openRequestsCount(useAppRequests(id ?? ''))
 
   const setTab = (t: TabKey) =>
@@ -446,7 +447,7 @@ export function AppDetailPage() {
                 value: e.key,
                 title: app.environments[e.key].enabled ? e.label : `${e.label} (não existe)`,
                 disabled: !app.environments[e.key].enabled,
-                count: appSecrets.filter((x) => x.env === e.key).length + app.environments[e.key].variables.length,
+                count: app.environments[e.key].vaultRefs.length,
                 label: (
                   <>
                     <span className="font-mono text-[11.5px] tracking-wide">{e.short}</span>
@@ -466,7 +467,7 @@ export function AppDetailPage() {
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         title={`Apagar ${app.name}?`}
-        body="A ficha, o histórico e todos os secrets desta app são apagados de vez. Se a app só deixou de ser usada, muda o estado para Descontinuada em vez de apagar."
+        body="A ficha, o histórico e os pedidos desta app são apagados de vez. As variáveis e os secrets continuam no cofre. Se a app só deixou de ser usada, muda o estado para Descontinuada em vez de apagar."
         confirmLabel="Apagar de vez"
         danger
         loading={deleting}

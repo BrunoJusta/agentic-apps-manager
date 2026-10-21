@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { ArrowUp, CaretDoubleUp, ChatCircleText, ClockCountdown, GithubLogo, Sparkle, UsersThree } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
-import type { AgenticApp, SecretDoc } from '../lib/types'
+import type { AgenticApp } from '../lib/types'
 import { allTags, daysUntil } from '../lib/app-utils'
 import { ENVS, isRequestOpen, maturityLabel, priorityLabel, ROTATION_WARNING_DAYS, statusLabel } from '../lib/constants'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
@@ -10,7 +10,7 @@ import { fmtNumber } from '../lib/format'
 import { trackSpotlight } from '../lib/spotlight'
 import { Badge } from './ui'
 
-export function rotationDue(secrets: SecretDoc[]) {
+export function rotationDue<T extends { rotateBy: string }>(secrets: T[]) {
   return secrets.filter((s) => {
     const d = daysUntil(s.rotateBy)
     return d !== null && d <= ROTATION_WARNING_DAYS
@@ -57,7 +57,7 @@ export function AppIcon({ app, size = 36, className }: { app: Pick<AgenticApp, '
 /** Cor da entidade de um cartão: a área (cadeia de valor). */
 export const appColor = (app: AgenticApp) => areaColor(app.area)
 
-export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; secrets: SecretDoc[]; showStatus?: boolean }) {
+export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; secrets: { rotateBy: string }[]; showStatus?: boolean }) {
   const tags = allTags(app)
   const due = rotationDue(secrets)
   const { requests } = useApps()
@@ -127,7 +127,7 @@ export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; sec
   )
 }
 
-export function AppCardLink({ app, secrets, index = 0, showStatus }: { app: AgenticApp; secrets: SecretDoc[]; index?: number; showStatus?: boolean }) {
+export function AppCardLink({ app, secrets, index = 0, showStatus }: { app: AgenticApp; secrets: { rotateBy: string }[]; index?: number; showStatus?: boolean }) {
   return (
     <Link
       to={`/apps/${app.id}`}

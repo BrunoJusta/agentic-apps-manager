@@ -1,5 +1,7 @@
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   collectionGroup,
   deleteDoc,
@@ -25,6 +27,7 @@ import {
   generateVaultKey,
   makeVaultCheck,
   secretAad,
+  vaultItemAad,
   wrapVaultKey,
 } from '../lib/crypto'
 import type {
@@ -42,7 +45,8 @@ import type {
   StatusKey,
   UserKeys,
   UserProfile,
-  Variable,
+  VaultItem,
+  VaultItemKind,
   VaultGrant,
   VaultMeta,
 } from '../lib/types'
@@ -124,14 +128,6 @@ export async function moveApp(app: AgenticApp, field: 'status' | 'maturity', val
   await addHistory(app.id, actor, field, `${field === 'status' ? 'Estado' : 'Maturidade'}: ${from} → ${to}`)
 }
 
-export async function saveVariables(app: AgenticApp, env: EnvKey, variables: Variable[], actor: Actor, summary: string) {
-  await updateDoc(doc(db, 'apps', app.id), {
-    [`environments.${env}.variables`]: variables,
-    updatedAt: serverTimestamp(),
-    updatedBy: actor.email,
-  })
-  await addHistory(app.id, actor, 'variables', summary)
-}
 
 export async function importApps(inputs: AppInput[], actor: Actor): Promise<number> {
   let n = 0
@@ -204,7 +200,7 @@ export async function deleteRequest(r: AppRequest, actor: Actor) {
 
 const toSecret = (id: string, data: Record<string, unknown>) => ({ id, ...(data as Omit<SecretDoc, 'id'>) })
 
-/** Índice de todos os secrets (só metadados úteis: nome, app, ambiente, rotação). Só Editors e Admins. */
+/** Secrets no formato antigo (dentro de cada app). Só servem para a migração para o cofre. */
 export function subscribeSecretsIndex(cb: (rows: SecretDoc[]) => void, onErr?: Err): Unsubscribe {
   return onSnapshot(
     collectionGroup(db, 'secrets'),
@@ -213,11 +209,33 @@ export function subscribeSecretsIndex(cb: (rows: SecretDoc[]) => void, onErr?: E
   )
 }
 
-export interface SecretInput {
+/* ---------- Itens do cofre (variáveis e secrets partilhados) ---------- */
+
+const toItem = (id: string, data: Record<string, unknown>): VaultItem => ({
+  id,
+  name: String(data.name ?? ''),
+  kind: data.kind === 'variable' ? 'variable' : 'secret',
+  type: (data.type as SecretType) ?? 'other',
+  note: String(data.note ?? ''),
+  rotateBy: String(data.rotateBy ?? ''),
+  iv: String(data.iv ?? ''),
+  ct: String(data.ct ?? ''),
+  version: typeof data.version === 'number' ? data.version : 0,
+  createdAt: (data.createdAt as VaultItem['createdAt']) ?? null,
+  createdBy: data.createdBy as string | undefined,
+  updatedAt: (data.updatedAt as VaultItem['updatedAt']) ?? null,
+  updatedBy: data.updatedBy as string | undefined,
+})
+
+/** Todos os itens do cofre (nomes e metadados; valores cifrados). Só Editors e Admins. */
+export function subscribeVaultItems(cb: (rows: VaultItem[]) => void, onErr?: Err): Unsubscribe {
+  return onSnapshot(collection(db, 'vaultItems'), (s) => cb(s.docs.map((d) => toItem(d.id, d.data()))), onErr)
+}
+
+export interface VaultItemInput {
   id?: string
-  appId: string
-  env: EnvKey
   name: string
+  kind: VaultItemKind
   type: SecretType
   note: string
   rotateBy: string
@@ -225,46 +243,117 @@ export interface SecretInput {
   value?: string
 }
 
-export async function saveSecret(input: SecretInput, vaultKey: CryptoKey, version: number, actor: Actor, appName: string) {
-  const col = collection(db, 'apps', input.appId, 'secrets')
-  const ref = input.id ? doc(col, input.id) : doc(col)
-  const meta = {
-    appId: input.appId,
-    env: input.env,
+/** Cria ou atualiza um item do cofre. Devolve o id. */
+export async function saveVaultItem(input: VaultItemInput, vaultKey: CryptoKey, version: number, actor: Actor): Promise<string> {
+  const ref = input.id ? doc(db, 'vaultItems', input.id) : doc(collection(db, 'vaultItems'))
+  const meta: Record<string, unknown> = {
     name: input.name.trim(),
-    type: input.type,
+    kind: input.kind,
+    type: input.kind === 'variable' ? 'other' : input.type,
     note: input.note.trim(),
-    rotateBy: input.rotateBy,
+    rotateBy: input.kind === 'variable' ? '' : input.rotateBy,
     updatedAt: serverTimestamp(),
     updatedBy: actor.email,
   }
   if (input.value !== undefined) {
-    const blob = await encryptString(vaultKey, input.value, secretAad(input.appId, ref.id))
-    Object.assign(meta, { ...blob, version })
+    Object.assign(meta, await encryptString(vaultKey, input.value, vaultItemAad(ref.id)), { version })
   }
-  if (input.id) {
-    await updateDoc(ref, meta)
-  } else {
-    await setDoc(ref, { ...meta, createdAt: serverTimestamp(), createdBy: actor.email })
-  }
+  if (input.id) await updateDoc(ref, meta)
+  else await setDoc(ref, { ...meta, createdAt: serverTimestamp(), createdBy: actor.email })
   await logAudit(actor, input.id ? 'secret_update' : 'secret_create', {
-    appId: input.appId,
-    appName,
-    env: input.env,
-    target: meta.name,
-    detail: input.value !== undefined ? 'valor definido' : 'só metadados',
+    target: String(meta.name),
+    detail: `${input.kind === 'variable' ? 'variável' : 'secret'}, ${input.value !== undefined ? 'valor definido' : 'só metadados'}`,
   })
-  await addHistory(input.appId, actor, 'secret', `${input.id ? 'Atualizou' : 'Criou'} o secret ${meta.name} (${input.env.toUpperCase()})`)
+  return ref.id
 }
 
-export async function deleteSecret(secret: SecretDoc, actor: Actor, appName: string) {
-  await deleteDoc(doc(db, 'apps', secret.appId, 'secrets', secret.id))
-  await logAudit(actor, 'secret_delete', { appId: secret.appId, appName, env: secret.env, target: secret.name })
-  await addHistory(secret.appId, actor, 'secret', `Apagou o secret ${secret.name} (${secret.env.toUpperCase()})`)
+/** Apaga o item e tira-o de todas as apps onde estava ligado, numa só escrita. */
+export async function deleteVaultItem(item: VaultItem, apps: AgenticApp[], actor: Actor) {
+  const b = writeBatch(db)
+  b.delete(doc(db, 'vaultItems', item.id))
+  const touched: { app: AgenticApp; env: EnvKey }[] = []
+  for (const app of apps) {
+    for (const env of ['dev', 'qa', 'prod'] as EnvKey[]) {
+      if (app.environments[env].vaultRefs.includes(item.id)) {
+        b.update(doc(db, 'apps', app.id), { [`environments.${env}.vaultRefs`]: arrayRemove(item.id) })
+        touched.push({ app, env })
+      }
+    }
+  }
+  await b.commit()
+  await logAudit(actor, 'secret_delete', { target: item.name, detail: `${item.kind === 'variable' ? 'variável' : 'secret'}, tirado de ${touched.length} ambiente(s)` })
+  for (const t of touched) await addHistory(t.app.id, actor, 'vault', `${item.name} foi apagado do cofre e saiu de ${t.env.toUpperCase()}`)
 }
 
-export async function revealSecret(secret: SecretDoc, vaultKey: CryptoKey): Promise<string> {
-  return decryptString(vaultKey, { iv: secret.iv, ct: secret.ct }, secretAad(secret.appId, secret.id))
+export async function revealVaultItem(item: VaultItem, vaultKey: CryptoKey): Promise<string> {
+  return decryptString(vaultKey, { iv: item.iv, ct: item.ct }, vaultItemAad(item.id))
+}
+
+/** Liga itens do cofre a um ambiente de uma app (só guarda os ids). */
+export async function linkVaultItems(app: AgenticApp, env: EnvKey, items: VaultItem[], actor: Actor) {
+  if (!items.length) return
+  await updateDoc(doc(db, 'apps', app.id), {
+    [`environments.${env}.vaultRefs`]: arrayUnion(...items.map((i) => i.id)),
+    updatedAt: serverTimestamp(),
+    updatedBy: actor.email,
+  })
+  await logAudit(actor, 'vault_link', { appId: app.id, appName: app.name, env, target: items.map((i) => i.name).join(', ') })
+  await addHistory(app.id, actor, 'vault', `Ligou ${items.map((i) => i.name).join(', ')} do cofre (${env.toUpperCase()})`)
+}
+
+export async function unlinkVaultItem(app: AgenticApp, env: EnvKey, item: { id: string; name: string }, actor: Actor) {
+  await updateDoc(doc(db, 'apps', app.id), {
+    [`environments.${env}.vaultRefs`]: arrayRemove(item.id),
+    updatedAt: serverTimestamp(),
+    updatedBy: actor.email,
+  })
+  await logAudit(actor, 'vault_unlink', { appId: app.id, appName: app.name, env, target: item.name })
+  await addHistory(app.id, actor, 'vault', `Desligou ${item.name} (${env.toUpperCase()}). O item continua no cofre.`)
+}
+
+/**
+ * Migra o modelo antigo (secrets dentro de cada app e variáveis em texto simples)
+ * para itens do cofre ligados às mesmas apps e ambientes. Uma escrita atómica por app.
+ */
+export async function migrateLegacyToVault(apps: AgenticApp[], legacy: SecretDoc[], vaultKey: CryptoKey, version: number, actor: Actor, onProgress?: (msg: string) => void) {
+  let nItems = 0
+  const ids = new Set([...apps.filter((a) => (['dev', 'qa', 'prod'] as EnvKey[]).some((e) => a.environments[e].variables.length)).map((a) => a.id), ...legacy.map((s) => s.appId)])
+  let done = 0
+  for (const appId of ids) {
+    const app = apps.find((a) => a.id === appId)
+    onProgress?.(`A migrar ${++done} de ${ids.size}…`)
+    const b = writeBatch(db)
+    const refs: Record<EnvKey, string[]> = { dev: [], qa: [], prod: [] }
+    const add = async (env: EnvKey, data: { name: string; kind: VaultItemKind; type: SecretType; note: string; rotateBy: string; value: string }) => {
+      const ref = doc(collection(db, 'vaultItems'))
+      const blob = await encryptString(vaultKey, data.value, vaultItemAad(ref.id))
+      const { value: _v, ...meta } = data
+      b.set(ref, { ...meta, ...blob, version, createdAt: serverTimestamp(), createdBy: actor.email, updatedAt: serverTimestamp(), updatedBy: actor.email })
+      refs[env].push(ref.id)
+      nItems++
+    }
+    const where = (env: EnvKey) => `${app?.name ?? 'app apagada'} (${env.toUpperCase()})`
+    for (const s of legacy.filter((x) => x.appId === appId)) {
+      const value = await decryptString(vaultKey, { iv: s.iv, ct: s.ct }, secretAad(s.appId, s.id))
+      await add(s.env, { name: s.name, kind: 'secret', type: s.type ?? 'other', note: s.note || `Migrado de ${where(s.env)}`, rotateBy: s.rotateBy ?? '', value })
+      b.delete(doc(db, 'apps', s.appId, 'secrets', s.id))
+    }
+    if (app) {
+      const upd: Record<string, unknown> = { updatedAt: serverTimestamp(), updatedBy: actor.email }
+      for (const env of ['dev', 'qa', 'prod'] as EnvKey[]) {
+        for (const v of app.environments[env].variables) {
+          await add(env, { name: v.key, kind: 'variable', type: 'other', note: v.note || `Migrado de ${where(env)}`, rotateBy: '', value: v.value })
+        }
+        if (refs[env].length) upd[`environments.${env}.vaultRefs`] = arrayUnion(...refs[env])
+        if (app.environments[env].variables.length) upd[`environments.${env}.variables`] = []
+      }
+      b.update(doc(db, 'apps', app.id), upd)
+    }
+    await b.commit()
+    if (app) await addHistory(app.id, actor, 'vault', 'Variáveis e secrets passaram para o cofre (migração)')
+  }
+  await logAudit(actor, 'vault_migrate', { detail: `${nItems} itens, ${ids.size} apps` })
+  return nItems
 }
 
 /* ---------- Utilizadores ---------- */
@@ -401,16 +490,18 @@ export async function rotateVault(
   actor: Actor,
   onProgress?: (msg: string) => void,
 ): Promise<CryptoKey> {
-  onProgress?.('A ler secrets…')
-  const snap = await getDocs(collectionGroup(db, 'secrets'))
+  onProgress?.('A ler o cofre…')
+  const legacy = await getDocs(collectionGroup(db, 'secrets'))
+  if (!legacy.empty) throw new Error(`Ainda há ${legacy.size} secrets no formato antigo. Migra-os no Cofre antes de rodar a chave.`)
+  const snap = await getDocs(collection(db, 'vaultItems'))
   const newKey = await generateVaultKey()
   const newVersion = oldVersion + 1
   type Op = { ref: (typeof snap.docs)[number]['ref']; data: Record<string, unknown> }
   const ops: Op[] = []
   let i = 0
   for (const d of snap.docs) {
-    const s = toSecret(d.id, d.data())
-    const aad = secretAad(s.appId, s.id)
+    const s = toItem(d.id, d.data())
+    const aad = vaultItemAad(s.id)
     const plain = await decryptString(oldKey, { iv: s.iv, ct: s.ct }, aad)
     const blob = await encryptString(newKey, plain, aad)
     ops.push({ ref: d.ref, data: { ...blob, version: newVersion } })
@@ -427,7 +518,7 @@ export async function rotateVault(
   // Tem de ser um único batch (atómico): ou tudo passa para a chave nova, ou nada muda.
   // Um batch do Firestore aceita até 500 escritas.
   if (ops.length + grantOps.length + 1 > 500) {
-    throw new Error(`Há ${ops.length} secrets e ${grantOps.length} acessos; a rotação atómica suporta até 500 escritas no total.`)
+    throw new Error(`Há ${ops.length} itens no cofre e ${grantOps.length} acessos; a rotação atómica suporta até 500 escritas no total.`)
   }
   onProgress?.('A gravar…')
   const b = writeBatch(db)
@@ -437,7 +528,7 @@ export async function rotateVault(
   }
   b.update(doc(db, 'vault', 'meta'), { version: newVersion, check, rotatedAt: serverTimestamp(), rotatedBy: actor.email })
   await b.commit()
-  await logAudit(actor, 'vault_rotate', { detail: `versão ${newVersion}, ${ops.length} secrets, ${grantOps.length} acessos` })
+  await logAudit(actor, 'vault_rotate', { detail: `versão ${newVersion}, ${ops.length} itens, ${grantOps.length} acessos` })
   return newKey
 }
 

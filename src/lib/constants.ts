@@ -10,6 +10,7 @@ import type {
   RepoAccount,
   Role,
   SecretType,
+  VaultItemKind,
   StatusKey,
 } from './types'
 
@@ -101,6 +102,7 @@ export function emptyEnvironment(enabled = false): Environment {
     hosting: '',
     appUrl: '',
     notes: '',
+    vaultRefs: [],
     variables: [],
   }
 }
@@ -132,6 +134,12 @@ export const maturityLabel = (k: MaturityKey) => MATURITIES.find((s) => s.key ==
 export const priorityLabel = (k: PriorityKey) => PRIORITIES.find((s) => s.key === k)?.label ?? k
 export const repoAccountLabel = (k: RepoAccount) => REPO_ACCOUNTS.find((s) => s.key === k)?.label ?? 'Não definida'
 export const roleLabel = (k: Role) => ROLES.find((s) => s.key === k)?.label ?? k
+export const VAULT_KINDS: { key: VaultItemKind; label: string }[] = [
+  { key: 'secret', label: 'Secret' },
+  { key: 'variable', label: 'Variável' },
+]
+export const vaultKindLabel = (k: VaultItemKind) => VAULT_KINDS.find((s) => s.key === k)?.label ?? k
+
 export const secretTypeLabel = (k: SecretType) => SECRET_TYPES.find((s) => s.key === k)?.label ?? k
 
 export const REQUEST_TYPES: { key: RequestType; label: string }[] = [

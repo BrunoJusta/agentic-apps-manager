@@ -6,7 +6,7 @@ rules_version = '2';
 // Princípios:
 //  - Só contas @sogrape.pt que estejam na coleção users, ativas, entram.
 //  - Viewers leem apps; Editors e Admins escrevem; só Admins gerem utilizadores e o cofre.
-//  - Secrets só têm texto cifrado (iv + ct). As regras recusam qualquer campo "value".
+//  - Variáveis e secrets vivem em vaultItems, só com texto cifrado (iv + ct). As regras recusam qualquer campo "value".
 //  - Auditoria e histórico são só de acrescentar: ninguém edita nem apaga.
 
 service cloud.firestore {
@@ -127,6 +127,26 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isSogrape() && email == myEmail());
     }
 
+    // ---------- itens do cofre (variáveis e secrets) ----------
+    // Só texto cifrado (iv + ct). As apps guardam apenas o id em environments.{env}.vaultRefs.
+    function validVaultItem() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 200
+        && d.kind in ['secret', 'variable']
+        && d.iv is string && d.ct is string
+        && d.version is int
+        && d.keys().hasOnly([
+          'name', 'kind', 'type', 'note', 'rotateBy', 'iv', 'ct', 'version',
+          'createdAt', 'createdBy', 'updatedAt', 'updatedBy'
+        ]);
+    }
+    match /vaultItems/{itemId} {
+      allow read: if isEditor();
+      allow create: if isEditor() && validVaultItem() && request.resource.data.createdBy == myEmail();
+      allow update: if isEditor() && validVaultItem();
+      allow delete: if isEditor();
+    }
+
     // ---------- apps ----------
     // Ícone: data URL de imagem, até ~200 KB (a app grava 256x256, normalmente < 30 KB).
     function validIcon() {
@@ -197,7 +217,7 @@ service cloud.firestore {
       allow read: if isReader();
     }
 
-    // Leitura em collection group (índice de secrets no cofre e rotação de chave).
+    // Leitura em collection group dos secrets antigos (migração para o cofre e verificação na rotação).
     match /{path=**}/secrets/{secretId} {
       allow read: if isEditor();
     }

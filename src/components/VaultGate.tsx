@@ -120,7 +120,7 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
 
   switch (vault.status) {
     case 'unavailable':
-      return shell(<LockKey size={20} />, 'Sem acesso aos secrets', 'O teu papel é Viewer. Vês as fichas e as variáveis, mas os secrets ficam fora de alcance.')
+      return shell(<LockKey size={20} />, 'Sem acesso ao cofre', 'O teu papel é Viewer. Vês as fichas das apps, mas as variáveis e os secrets do cofre ficam fora de alcance.')
     case 'loading':
       return (
         <Panel className="flex items-center gap-3 p-5 text-sm text-ink-subtle" >
@@ -175,7 +175,7 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
         'warning',
       )
     case 'locked':
-      return shell(<LockKey size={20} />, 'Cofre bloqueado', 'Escreve a tua passphrase pessoal para veres e copiares secrets nesta sessão.', <UnlockForm onDone={() => toast('Cofre aberto.')} />)
+      return shell(<LockKey size={20} />, 'Cofre bloqueado', 'Escreve a tua passphrase pessoal para veres, copiares e criares variáveis e secrets nesta sessão.', <UnlockForm onDone={() => toast('Cofre aberto.')} />)
     case 'unlocked':
       return shell(
         <UnlockBurst />,

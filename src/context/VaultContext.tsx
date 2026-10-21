@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAuth } from './AuthContext'
 import { AUTO_LOCK_MINUTES } from '../lib/constants'
 import { createUserKeys, openPrivateKey, unwrapVaultKey, verifyVaultCheck } from '../lib/crypto'
-import type { SecretDoc, UserKeys, VaultGrant, VaultMeta } from '../lib/types'
+import type { SecretDoc, UserKeys, VaultGrant, VaultItem, VaultMeta } from '../lib/types'
 import {
   initVault,
   resetKeys,
@@ -10,6 +10,7 @@ import {
   subscribeGrant,
   subscribeSecretsIndex,
   subscribeUserKeys,
+  subscribeVaultItems,
   subscribeVaultMeta,
 } from '../data/store'
 
@@ -28,8 +29,12 @@ interface VaultState {
   meta: VaultMeta | null
   myKeys: UserKeys | null
   key: CryptoKey | null
-  secrets: SecretDoc[]
-  secretsLoaded: boolean
+  /** Itens do cofre (variáveis e secrets). Só nomes e metadados; os valores estão cifrados. */
+  items: VaultItem[]
+  itemsById: Map<string, VaultItem>
+  itemsLoaded: boolean
+  /** Secrets no formato antigo, à espera de migração. */
+  legacySecrets: SecretDoc[]
   unlock: (passphrase: string) => Promise<void>
   lock: () => void
   createKeys: (passphrase: string) => Promise<void>
@@ -49,8 +54,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   const [grant, setGrant] = useState<VaultGrant | null | undefined>(undefined)
   const [key, setKey] = useState<CryptoKey | null>(null)
   const [keyVersion, setKeyVersion] = useState<number | null>(null)
-  const [secrets, setSecrets] = useState<SecretDoc[]>([])
-  const [secretsLoaded, setSecretsLoaded] = useState(false)
+  const [items, setItems] = useState<VaultItem[]>([])
+  const [itemsLoaded, setItemsLoaded] = useState(false)
+  const [legacySecrets, setLegacySecrets] = useState<SecretDoc[]>([])
   const lastActivity = useRef(Date.now())
 
   useEffect(() => {
@@ -59,21 +65,23 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       setMyKeys(undefined)
       setGrant(undefined)
       setKey(null)
-      setSecrets([])
-      setSecretsLoaded(false)
+      setItems([])
+      setItemsLoaded(false)
+      setLegacySecrets([])
       return
     }
     const subs = [
       subscribeVaultMeta(setMeta, () => setMeta(null)),
       subscribeUserKeys(email, setMyKeys, () => setMyKeys(null)),
       subscribeGrant(email, setGrant, () => setGrant(null)),
-      subscribeSecretsIndex(
+      subscribeVaultItems(
         (rows) => {
-          setSecrets(rows)
-          setSecretsLoaded(true)
+          setItems(rows.sort((a, b) => a.name.localeCompare(b.name)))
+          setItemsLoaded(true)
         },
-        () => setSecretsLoaded(true),
+        () => setItemsLoaded(true),
       ),
+      subscribeSecretsIndex(setLegacySecrets, () => setLegacySecrets([])),
     ]
     return () => subs.forEach((u) => u())
   }, [enabled, email])
@@ -174,14 +182,18 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   else if (grant.version !== meta.version) status = 'stale-grant'
   else status = 'locked'
 
+  const itemsById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items])
+
   const value = useMemo<VaultState>(
     () => ({
       status,
       meta: meta ?? null,
       myKeys: myKeys ?? null,
       key,
-      secrets,
-      secretsLoaded,
+      items,
+      itemsById,
+      itemsLoaded,
+      legacySecrets,
       unlock,
       lock,
       createKeys,
@@ -189,7 +201,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       resetMyKeys,
       adoptKey,
     }),
-    [status, meta, myKeys, key, secrets, secretsLoaded, unlock, lock, createKeys, initialize, resetMyKeys, adoptKey],
+    [status, meta, myKeys, key, items, itemsById, itemsLoaded, legacySecrets, unlock, lock, createKeys, initialize, resetMyKeys, adoptKey],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

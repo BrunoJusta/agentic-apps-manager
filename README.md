@@ -48,7 +48,7 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 
 | Papel  | Board e fichas | Editar apps | Secrets | Utilizadores e rotação |
 |--------|----------------|-------------|---------|----------------------------------|
-| Viewer | Sim            | Não         | Nunca (nem os nomes) | Não                    |
+| Viewer | Sim            | Não         | Nunca (nem os nomes das variáveis e secrets) | Não |
 | Editor | Sim            | Sim         | Se um Admin lhe der acesso ao cofre | Não     |
 | Admin  | Sim            | Sim, e apagar | Sim   | Sim                              |
 
@@ -58,13 +58,13 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 - **Cofre, cifrado no browser**: o Firestore só guarda texto cifrado.
   - Cada pessoa tem um par de chaves RSA-OAEP 3072. A chave privada é cifrada com AES-256-GCM, com uma chave derivada da passphrase pessoal (PBKDF2-SHA256, 600 000 iterações). A passphrase nunca sai do browser.
   - Existe uma chave do cofre (AES-256-GCM). Para cada pessoa com acesso, essa chave é embrulhada com a chave pública dela (`vaultGrants/{email}`).
-  - Cada secret é cifrado com a chave do cofre, com IV aleatório e AAD igual ao caminho do documento, para que um texto cifrado não possa ser trocado de sítio.
+  - Cada item do cofre (variável ou secret) é cifrado com a chave do cofre, com IV aleatório e AAD igual ao caminho do documento (`vaultItems/{id}`), para que um texto cifrado não possa ser trocado de sítio.
   - Nem o Firebase, nem a Vercel, nem quem tiver acesso à consola consegue ler os valores.
 - **Bloqueio automático** após 15 minutos sem atividade. Ao recarregar a página, o cofre também volta a bloquear (a chave só vive em memória).
 - **Valores revelados** escondem-se sozinhos após 30 segundos.
 - **Auditoria**: revelar, copiar, exportar, importar, criar, alterar e apagar secrets, dar e retirar acesso, rodar a chave, gerir utilizadores e logins ficam registados na coleção `audit`. Ninguém pode editar nem apagar registos. Para já não há página na app para os consultar; consultam-se na consola do Firebase.
 - **Rotação**: em Utilizadores, "Rodar chave" gera uma chave nova, volta a cifrar todos os secrets e renova os acessos numa única escrita atómica. Faz isto quando alguém que tinha acesso sai da equipa.
-- **Variáveis** (não secretas) ficam em texto simples e são visíveis para todos os papéis. Chaves, tokens e passwords são sempre secrets.
+- **Variáveis e secrets vivem só no cofre**, ambos cifrados. As apps guardam apenas a ligação (o id do item) por ambiente; na ficha vê-se o nome, nunca o valor. Valores só se revelam, copiam ou editam na página Cofre.
 
 ## 7. Funcionalidades
 
@@ -77,12 +77,13 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 - **Owner**: cada app tem um owner, editado e mostrado em Governance.
 - **Gate de Produção**: uma app só passa para Produção com owner e ambiente de produção (alojamento, URL e BD) preenchidos. O repositório é opcional, porque algumas apps do Google AI Studio têm o código dentro do ambiente Google; nesse caso escolhe a conta "Google AI Studio".
 - **URLs da app por ambiente** (DEV, QA, PROD): preenchidos na ficha (Editar, secção Ambientes), aparecem em "URLs da app" na visão geral, como atalhos no topo da ficha e como links na tabela.
-- **Ficha da app** com os separadores Visão geral, Ambientes e cofre (DEV, QA e PROD), Pessoas, Links e governo, e Histórico.
-- **Variáveis e secrets por ambiente**:
-  - Importar um `.env` colado: o parser sugere automaticamente o que é secret.
-  - Exportar `.env` (registado na auditoria).
-  - Data de "rodar até", com aviso a 30 dias.
-- **Pesquisa global** com Ctrl K ou ⌘K: apps, nomes de secrets e nomes de variáveis. Os valores nunca são pesquisáveis.
+- **Ficha da app** com os separadores Visão geral, Pedidos, Ambientes e cofre (DEV, QA e PROD), Governance e Histórico.
+- **Cofre** (página própria): cria-se aqui cada variável ou secret, com nome, tipo, nota e data de "rodar até" (aviso a 30 dias). Mostra onde cada item está ligado e permite revelar, copiar, editar e apagar. Apagar um item tira-o de todas as apps.
+  - Importar um `.env` colado: o parser sugere o que é secret, e os itens podem ficar logo ligados a uma app e ambiente.
+  - Um mesmo item pode ser ligado a várias apps (por exemplo, uma chave partilhada). Nomes repetidos são permitidos; a nota serve para os distinguir.
+- **Variáveis e secrets na ficha**: em Ambientes e cofre, "Ligar do cofre" deixa escolher itens pelo nome; "Desligar" tira a ligação sem apagar o item. "Exportar .env" junta os itens ligados a esse ambiente (precisa do cofre aberto, fica registado na auditoria).
+- **Migração**: variáveis e secrets do modelo antigo (dentro de cada app) aparecem num aviso no Cofre; "Migrar para o cofre" cifra-os e liga-os às mesmas apps e ambientes.
+- **Pesquisa global** com Ctrl K ou ⌘K: apps e nomes dos itens do cofre (só para Editors e Admins). Os valores nunca são pesquisáveis.
 - **Importar e exportar JSON** de apps (sem secrets).
 
 ### Linguagem visual
@@ -96,8 +97,9 @@ users/{email}                 perfil, papel, ativo
 userKeys/{email}              chave pública + chave privada cifrada com a passphrase
 vault/meta                    versão da chave do cofre + bloco de verificação
 vaultGrants/{email}           chave do cofre embrulhada para essa pessoa
-apps/{appId}                  ficha da app (inclui ambientes e variáveis)
-apps/{appId}/secrets/{id}     nome, tipo, nota, rodar até, iv, ct (cifrado)
+apps/{appId}                  ficha da app (ambientes com as ligações ao cofre em vaultRefs)
+vaultItems/{id}               variável ou secret: nome, tipo, nota, rodar até, iv, ct (cifrado)
+apps/{appId}/secrets/{id}     antigo: só existe até ser migrado para o cofre
 apps/{appId}/requests/{id}    pedidos (alterações, updates, novos módulos, bugs)
 apps/{appId}/history/{id}     histórico de alterações
 audit/{id}                    registo de auditoria (só acrescentar)
@@ -114,6 +116,6 @@ npm run test:rules
 ## 10. Limites conhecidos
 
 - Se alguém esquecer a passphrase, não há recuperação. A pessoa repõe as chaves e um Admin volta a dar acesso. Os secrets não se perdem enquanto houver outra pessoa com acesso.
-- A rotação atómica suporta até cerca de 500 escritas (secrets + acessos) numa só operação.
+- A rotação atómica suporta até cerca de 500 escritas (itens do cofre + acessos) numa só operação.
 - Ao copiar um secret, a app não consegue limpar a área de transferência do sistema depois.
 - O login depende de a conta Microsoft ter o email preenchido (as contas da Sogrape têm).

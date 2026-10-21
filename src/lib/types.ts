@@ -35,6 +35,9 @@ export interface Environment {
   hosting: string
   appUrl: string
   notes: string
+  /** Itens do cofre ligados a este ambiente (ids de vaultItems). A app só guarda a referência. */
+  vaultRefs: string[]
+  /** Antigo: variáveis em texto simples. Só existe até serem migradas para o cofre. */
   variables: Variable[]
 }
 
@@ -131,6 +134,29 @@ export interface VaultGrant {
 
 export type SecretType = 'api_key' | 'password' | 'connection_string' | 'service_account' | 'token' | 'other'
 
+export type VaultItemKind = 'variable' | 'secret'
+
+/**
+ * Item do cofre (variável ou secret). Vive em vaultItems/{id}, com o valor sempre cifrado.
+ * As apps só guardam o id em environments.{env}.vaultRefs; na ficha vê-se o nome, nunca o valor.
+ */
+export interface VaultItem {
+  id: string
+  name: string
+  kind: VaultItemKind
+  type: SecretType
+  note: string
+  rotateBy: string
+  iv: string
+  ct: string
+  version: number
+  createdAt?: Timestamp | null
+  createdBy?: string
+  updatedAt?: Timestamp | null
+  updatedBy?: string
+}
+
+/** Antigo: secret guardado dentro da app (apps/{appId}/secrets). Só existe até ser migrado. */
 export interface SecretDoc {
   id: string
   appId: string
@@ -190,6 +216,9 @@ export type AuditAction =
   | 'vault_grant'
   | 'vault_revoke'
   | 'vault_rotate'
+  | 'vault_link'
+  | 'vault_unlink'
+  | 'vault_migrate'
   | 'keys_create'
   | 'keys_reset'
   | 'user_create'

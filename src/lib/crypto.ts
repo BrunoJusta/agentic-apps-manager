@@ -148,6 +148,8 @@ export async function verifyVaultCheck(key: CryptoKey, check: { iv: string; ct: 
 
 /** AAD de um secret: o caminho do documento. */
 export const secretAad = (appId: string, secretId: string) => `apps/${appId}/secrets/${secretId}`
+/** AAD dos itens do cofre: o valor fica preso ao documento onde foi gravado. */
+export const vaultItemAad = (itemId: string) => `vaultItems/${itemId}`
 
 /** Regras mínimas de passphrase: 12+ caracteres. */
 export function passphraseProblems(p: string): string | null {

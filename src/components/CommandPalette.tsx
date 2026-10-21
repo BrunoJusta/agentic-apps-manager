@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { Cube, Key, MagnifyingGlass, TextAa } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useVault } from '../context/VaultContext'
+import { usageIndex } from '../lib/vault-utils'
 import { matchesSearch } from '../lib/app-utils'
 import { statusLabel } from '../lib/constants'
 import { Kbd } from './ui'
@@ -24,7 +25,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
   const { apps } = useApps()
-  const { secrets } = useVault()
+  const { items: vaultItems } = useVault()
+  const uses = useMemo(() => usageIndex(apps), [apps])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -41,35 +43,27 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   const items = useMemo<Item[]>(() => {
     const s = q.trim().toLowerCase()
-    const appName = new Map(apps.map((a) => [a.id, a.name]))
     const out: Item[] = apps
       .filter((a) => matchesSearch(a, s))
       .slice(0, 8)
       .map((a) => ({ id: `a-${a.id}`, kind: 'app', title: a.name, subtitle: `${statusLabel(a.status)}${a.shortDescription ? `, ${a.shortDescription}` : ''}`, to: `/apps/${a.id}`, app: { name: a.name, icon: a.icon, area: a.area } }))
     if (s) {
-      for (const sec of secrets) {
-        if (out.length > 30) break
-        if (sec.name.toLowerCase().includes(s))
+      for (const it of vaultItems) {
+        if (out.length > 40) break
+        if (it.name.toLowerCase().includes(s)) {
+          const u = uses.get(it.id) ?? []
           out.push({
-            id: `s-${sec.id}`,
-            kind: 'secret',
-            title: sec.name,
-            subtitle: `Secret em ${appName.get(sec.appId) ?? 'app'} (${sec.env.toUpperCase()})`,
-            to: `/apps/${sec.appId}?tab=ambientes&env=${sec.env}#secret-${sec.id}`,
+            id: `i-${it.id}`,
+            kind: it.kind,
+            title: it.name,
+            subtitle: `${it.kind === 'secret' ? 'Secret' : 'Variável'} no cofre${u.length ? `, ligado a ${u.map((x) => `${x.app.name} (${x.env.toUpperCase()})`).join(', ')}` : ''}`,
+            to: `/cofre?q=${encodeURIComponent(it.name)}#item-${it.id}`,
           })
-      }
-      for (const a of apps) {
-        for (const env of ['dev', 'qa', 'prod'] as const) {
-          for (const v of a.environments[env].variables) {
-            if (out.length > 40) break
-            if (v.key.toLowerCase().includes(s))
-              out.push({ id: `v-${a.id}-${env}-${v.key}`, kind: 'variable', title: v.key, subtitle: `Variável em ${a.name} (${env.toUpperCase()})`, to: `/apps/${a.id}?tab=ambientes&env=${env}` })
-          }
         }
       }
     }
     return out
-  }, [q, apps, secrets])
+  }, [q, apps, vaultItems, uses])
 
   useEffect(() => setActive(0), [q])
 
@@ -152,7 +146,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
               ))
             )}
           </ul>
-          <p className="border-t border-hairline px-4 py-2 text-[11px] text-ink-subtle">A pesquisa usa só nomes. Os valores dos secrets nunca são pesquisáveis.</p>
+          <p className="border-t border-hairline px-4 py-2 text-[11px] text-ink-subtle">A pesquisa usa só nomes. Os valores do cofre nunca são pesquisáveis.</p>
         </div>
       ) : null}
     </dialog>

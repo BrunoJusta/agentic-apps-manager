@@ -32,6 +32,7 @@ export function normalizeApp(id: string, raw: Record<string, unknown>): AgenticA
     envs[k] = {
       ...emptyEnvironment(base.environments[k].enabled),
       ...e,
+      vaultRefs: Array.isArray(e.vaultRefs) ? [...new Set(e.vaultRefs.map(String).filter(Boolean))] : [],
       variables: Array.isArray(e.variables) ? e.variables.map((v) => ({ key: String(v.key ?? ''), value: String(v.value ?? ''), note: v.note ? String(v.note) : '' })) : [],
     }
   }
