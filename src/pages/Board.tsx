@@ -14,7 +14,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { DownloadSimple, Kanban, Plus, Rows, UploadSimple, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { DownloadSimple, Kanban, Plus, RocketLaunch, Rows, UploadSimple, CheckCircle, XCircle } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useVault } from '../context/VaultContext'
@@ -59,6 +59,32 @@ function DraggableCard({ app, secrets, index, disabled, animate }: { app: Agenti
     <div ref={setNodeRef} {...attrs} {...listeners} aria-roledescription={disabled ? undefined : 'cartão arrastável'} className={clsx('outline-none', isDragging && 'opacity-30')}>
       <AppCardLink app={app} secrets={secrets} index={animate ? index : 0} />
     </div>
+  )
+}
+
+/** Zona para largar uma app e passá-la a Produção (sai do board para Finalizadas). */
+function ProductionDropZone({ active }: { active: boolean }) {
+  const { setNodeRef, isOver } = useDroppable({ id: 'producao' })
+  return (
+    <section aria-label="Passar a Produção" className="flex w-44 shrink-0 flex-col">
+      <header className="flex h-10 items-center gap-2 px-1.5">
+        <Dot color={STATUS_COLORS.producao} />
+        <h2 className="font-display text-[13.5px] font-semibold tracking-[-0.01em] whitespace-nowrap text-ink">Produção</h2>
+      </header>
+      <div
+        ref={setNodeRef}
+        className={clsx(
+          'flex min-h-36 flex-1 flex-col items-center justify-center gap-2 rounded-card p-4 text-center transition-[background-color,box-shadow] duration-200',
+          isOver ? 'drop-glow' : active ? 'bg-sel shadow-[inset_0_0_0_1px_var(--hairline-strong)]' : 'shadow-[inset_0_0_0_1px_var(--hairline)]',
+        )}
+      >
+        <RocketLaunch size={20} className={isOver ? 'text-ink' : 'text-ink-tertiary'} aria-hidden />
+        <p className="text-[12px] text-ink-subtle">{active ? 'Larga aqui para passar a Produção' : 'Arrasta uma app para aqui quando entrar em produção'}</p>
+        <Link to="/finalizadas" className="font-display text-[12px] font-medium text-ink-subtle underline decoration-hairline-strong underline-offset-2 hover:text-ink">
+          Ver em Finalizadas
+        </Link>
+      </div>
+    </section>
   )
 }
 
@@ -135,7 +161,7 @@ export function AppsPage() {
     return m
   }, [secrets])
 
-  // O board só mostra apps em curso; Manutenção e Descontinuada vivem na tab Finalizadas.
+  // O board só mostra apps em curso; Produção e Descontinuada vivem na tab Finalizadas.
   const activeApps = useMemo(() => apps.filter((a) => !isFinished(a.status)), [apps])
   const finishedCount = apps.length - activeApps.length
 
@@ -163,6 +189,7 @@ export function AppsPage() {
     withTransition(() => setOverride((o) => ({ ...o, [app.id]: value })))
     try {
       await moveApp(app, field, value as StatusKey | MaturityKey, actor)
+      if (field === 'status' && isFinished(value as StatusKey)) toast(`${app.name} passou a ${statusLabel(value as StatusKey)} e está agora em Finalizadas.`)
     } catch (e) {
       withTransition(() =>
         setOverride((o) => {
@@ -329,6 +356,7 @@ export function AppsPage() {
                 </DroppableColumn>
               )
             })}
+            {group === 'status' && canEdit ? <ProductionDropZone active={!!dragging} /> : null}
           </div>
           <DragOverlay dropAnimation={null}>
             {dragging ? (
@@ -352,7 +380,7 @@ export function AppsPage() {
         open={!!gate}
         onClose={() => setGate(null)}
         title={`${gate?.app.name ?? ''} ainda não está pronta para Produção`}
-        description="Para passar para Produção, a ficha tem de ter as pessoas, o repositório e o ambiente de produção preenchidos."
+        description="Para passar para Produção, a ficha tem de ter o owner, o repositório e o ambiente de produção preenchidos."
         footer={
           <>
             <Button variant="ghost" onClick={() => setGate(null)}>

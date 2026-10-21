@@ -3,6 +3,7 @@ import {
   collection,
   collectionGroup,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   limit,
@@ -28,6 +29,7 @@ import {
 } from '../lib/crypto'
 import type {
   AgenticApp,
+  AppRequest,
   AppInput,
   AuditAction,
   AuditEntry,
@@ -102,10 +104,14 @@ export async function createApp(input: AppInput, actor: Actor): Promise<string> 
   return ref.id
 }
 
+/** Campos que deixaram de existir; são apagados quando a ficha é gravada. */
+const LEGACY_FIELDS = ['businessOwner', 'aiLead', 'developers', 'supportL1', 'supportL2', 'itContact']
+
 export async function updateApp(id: string, before: AppInput, after: AppInput, actor: Actor) {
   const fields = changedFields(before, after)
   if (!fields.length) return
-  await updateDoc(doc(db, 'apps', id), { ...after, updatedAt: serverTimestamp(), updatedBy: actor.email })
+  const legacy = Object.fromEntries(LEGACY_FIELDS.map((k) => [k, deleteField()]))
+  await updateDoc(doc(db, 'apps', id), { ...after, ...legacy, updatedAt: serverTimestamp(), updatedBy: actor.email })
   await addHistory(id, actor, 'update', `Alterou ${fields.join(', ')}`)
 }
 
@@ -137,7 +143,7 @@ export async function importApps(inputs: AppInput[], actor: Actor): Promise<numb
 }
 
 export async function deleteApp(app: AgenticApp, actor: Actor) {
-  const subs = ['secrets', 'history'] as const
+  const subs = ['secrets', 'history', 'requests'] as const
   for (const sub of subs) {
     const snap = await getDocs(collection(db, 'apps', app.id, sub))
     for (let i = 0; i < snap.docs.length; i += 400) {
@@ -156,6 +162,42 @@ export function subscribeHistory(appId: string, cb: (rows: HistoryEntry[]) => vo
     (s) => cb(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<HistoryEntry, 'id'>) }))),
     onErr,
   )
+}
+
+/* ---------- Pedidos (alterações, updates, novos módulos, bugs) ---------- */
+
+/** Todos os pedidos de todas as apps (para contagens e listas). Qualquer utilizador ativo lê. */
+export function subscribeRequestsIndex(cb: (rows: AppRequest[]) => void, onErr?: Err): Unsubscribe {
+  return onSnapshot(
+    collectionGroup(db, 'requests'),
+    (s) => cb(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<AppRequest, 'id'>) }))),
+    onErr,
+  )
+}
+
+export type RequestInput = Omit<AppRequest, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'> & { id?: string }
+
+export async function saveRequest(input: RequestInput, actor: Actor) {
+  const { id, ...data } = input
+  const clean = { ...data, title: data.title.trim(), description: data.description.trim(), updatedAt: serverTimestamp(), updatedBy: actor.email }
+  if (id) {
+    await updateDoc(doc(db, 'apps', input.appId, 'requests', id), clean)
+    await addHistory(input.appId, actor, 'request', `Atualizou o pedido “${clean.title}”`)
+  } else {
+    await addDoc(collection(db, 'apps', input.appId, 'requests'), { ...clean, createdAt: serverTimestamp(), createdBy: actor.email })
+    await addHistory(input.appId, actor, 'request', `Registou o pedido “${clean.title}”`)
+  }
+}
+
+export async function setRequestStatus(r: AppRequest, status: AppRequest['status'], label: string, actor: Actor) {
+  if (r.status === status) return
+  await updateDoc(doc(db, 'apps', r.appId, 'requests', r.id), { status, updatedAt: serverTimestamp(), updatedBy: actor.email })
+  await addHistory(r.appId, actor, 'request', `Pedido “${r.title}”: ${label}`)
+}
+
+export async function deleteRequest(r: AppRequest, actor: Actor) {
+  await deleteDoc(doc(db, 'apps', r.appId, 'requests', r.id))
+  await addHistory(r.appId, actor, 'request', `Apagou o pedido “${r.title}”`)
 }
 
 /* ---------- Secrets ---------- */

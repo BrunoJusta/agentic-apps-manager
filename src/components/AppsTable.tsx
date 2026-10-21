@@ -20,7 +20,7 @@ const getters: Record<SortKey, (a: AgenticApp) => string | number> = {
   status: statusRank,
   maturity: maturityRank,
   priority: (a) => priorityRank(a.priority),
-  owner: (a) => a.businessOwner.name.toLowerCase(),
+  owner: (a) => a.owner.name.toLowerCase(),
   goLive: (a) => a.goLiveDate || '9999',
   users: (a) => a.activeUsers ?? -1,
   updated: (a) => toDate(a.updatedAt ?? null)?.getTime() ?? 0,
@@ -70,7 +70,7 @@ export function AppsTable({ apps, empty }: { apps: AgenticApp[]; empty?: React.R
                   <Th sort={sort} setSort={setSort} k="status">Estado</Th>
                   <Th sort={sort} setSort={setSort} k="maturity">Maturidade</Th>
                   <Th sort={sort} setSort={setSort} k="priority">Prioridade</Th>
-                  <Th sort={sort} setSort={setSort} k="owner">Dono de negócio</Th>
+                  <Th sort={sort} setSort={setSort} k="owner">Owner</Th>
                   <th scope="col" className="px-3.5 py-2.5 text-left font-display font-medium text-ink-subtle">
                     Ambientes
                   </th>
@@ -110,7 +110,7 @@ export function AppsTable({ apps, empty }: { apps: AgenticApp[]; empty?: React.R
                         {priorityLabel(a.priority)}
                       </span>
                     </td>
-                    <td className="max-w-44 truncate px-3.5 py-[11px] text-ink-muted">{a.businessOwner.name || <span className="text-ink-tertiary">Por definir</span>}</td>
+                    <td className="max-w-44 truncate px-3.5 py-[11px] text-ink-muted">{a.owner.name || <span className="text-ink-tertiary">Por definir</span>}</td>
                     <td className="px-3.5 py-[11px]">
                       <span className="flex gap-1">
                         {ENVS.filter((e) => a.environments[e.key].enabled).map((e) =>

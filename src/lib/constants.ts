@@ -1,4 +1,6 @@
 import type {
+  RequestStatus,
+  RequestType,
   AppInput,
   EnvKey,
   Environment,
@@ -22,13 +24,12 @@ export const STATUSES: { key: StatusKey; label: string; hint: string }[] = [
   { key: 'discovery', label: 'Discovery', hint: 'Levantamento com o negócio e protótipo' },
   { key: 'desenvolvimento', label: 'Em desenvolvimento', hint: 'Construção ativa' },
   { key: 'qa', label: 'QA / UAT', hint: 'Testes com utilizadores-chave' },
-  { key: 'producao', label: 'Produção', hint: 'Em uso real' },
-  { key: 'manutencao', label: 'Manutenção', hint: 'Estável, só correções e pequenas melhorias' },
+  { key: 'producao', label: 'Produção', hint: 'Em uso real. Alterações e novos módulos registam-se como pedidos na ficha.' },
   { key: 'descontinuada', label: 'Descontinuada', hint: 'Desligada ou substituída' },
 ]
 
 /** Fases que saem do board e vivem na tab Finalizadas. */
-export const FINISHED_STATUSES: StatusKey[] = ['manutencao', 'descontinuada']
+export const FINISHED_STATUSES: StatusKey[] = ['producao', 'descontinuada']
 export const isFinished = (s: StatusKey) => FINISHED_STATUSES.includes(s)
 
 export const MATURITIES: { key: MaturityKey; label: string }[] = [
@@ -115,11 +116,7 @@ export function emptyApp(): AppInput {
     priority: 'media',
     status: 'ideia',
     maturity: 'poc',
-    businessOwner: { name: '', email: '' },
-    aiLead: { name: '', email: '' },
-    developers: [],
-    supportL1: [],
-    supportL2: [],
+    owner: { name: '', email: '' },
     startDate: '',
     goLiveDate: '',
     activeUsers: null,
@@ -137,3 +134,22 @@ export const priorityLabel = (k: PriorityKey) => PRIORITIES.find((s) => s.key ==
 export const repoAccountLabel = (k: RepoAccount) => REPO_ACCOUNTS.find((s) => s.key === k)?.label ?? 'Não definida'
 export const roleLabel = (k: Role) => ROLES.find((s) => s.key === k)?.label ?? k
 export const secretTypeLabel = (k: SecretType) => SECRET_TYPES.find((s) => s.key === k)?.label ?? k
+
+export const REQUEST_TYPES: { key: RequestType; label: string }[] = [
+  { key: 'alteracao', label: 'Alteração' },
+  { key: 'update', label: 'Update' },
+  { key: 'modulo', label: 'Novo módulo' },
+  { key: 'bug', label: 'Bug' },
+]
+
+export const REQUEST_STATUSES: { key: RequestStatus; label: string; open: boolean }[] = [
+  { key: 'novo', label: 'Novo', open: true },
+  { key: 'analise', label: 'Em análise', open: true },
+  { key: 'curso', label: 'Em curso', open: true },
+  { key: 'concluido', label: 'Concluído', open: false },
+  { key: 'rejeitado', label: 'Rejeitado', open: false },
+]
+
+export const requestTypeLabel = (k: RequestType) => REQUEST_TYPES.find((t) => t.key === k)?.label ?? k
+export const requestStatusLabel = (k: RequestStatus) => REQUEST_STATUSES.find((t) => t.key === k)?.label ?? k
+export const isRequestOpen = (k: RequestStatus) => REQUEST_STATUSES.find((t) => t.key === k)?.open ?? true

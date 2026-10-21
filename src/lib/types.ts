@@ -8,7 +8,6 @@ export type StatusKey =
   | 'desenvolvimento'
   | 'qa'
   | 'producao'
-  | 'manutencao'
   | 'descontinuada'
 
 export type MaturityKey = 'poc' | 'piloto' | 'mvp' | 'estavel' | 'escala'
@@ -57,11 +56,8 @@ export interface AgenticApp {
   priority: PriorityKey
   status: StatusKey
   maturity: MaturityKey
-  businessOwner: Person
-  aiLead: Person
-  developers: Person[]
-  supportL1: Person[]
-  supportL2: Person[]
+  /** Responsável pela app. */
+  owner: Person
   startDate: string
   goLiveDate: string
   activeUsers: number | null
@@ -148,6 +144,26 @@ export interface SecretDoc {
   iv: string
   ct: string
   version: number
+  createdAt?: Timestamp | null
+  createdBy?: string
+  updatedAt?: Timestamp | null
+  updatedBy?: string
+}
+
+export type RequestType = 'alteracao' | 'update' | 'modulo' | 'bug'
+export type RequestStatus = 'novo' | 'analise' | 'curso' | 'concluido' | 'rejeitado'
+
+/** Pedido sobre uma app (sobretudo em produção): alteração, update, novo módulo ou bug. */
+export interface AppRequest {
+  id: string
+  appId: string
+  type: RequestType
+  title: string
+  description: string
+  priority: PriorityKey
+  status: RequestStatus
+  requestedBy: Person
+  dueDate: string
   createdAt?: Timestamp | null
   createdBy?: string
   updatedAt?: Timestamp | null

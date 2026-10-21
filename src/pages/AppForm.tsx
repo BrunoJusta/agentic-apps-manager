@@ -24,12 +24,11 @@ import {
 import { allTags, productionReadiness, toInput } from '../lib/app-utils'
 import { createApp, updateApp } from '../data/store'
 import type { AppInput, EnvKey, Environment, RepoAccount, StatusKey } from '../lib/types'
-import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, PeopleInput, PersonInput, Segmented, Select, Skeleton, TagInput, Textarea } from '../components/ui'
+import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, PersonInput, Segmented, Select, Skeleton, TagInput, Textarea } from '../components/ui'
 
 const SECTIONS = [
   { id: 'identidade', label: 'Identidade' },
   { id: 'estado', label: 'Estado' },
-  { id: 'pessoas', label: 'Pessoas' },
   { id: 'stack', label: 'Stack' },
   { id: 'ambientes', label: 'Ambientes' },
   { id: 'repositorio', label: 'Repositório' },
@@ -122,7 +121,7 @@ export function AppFormPage() {
       const base = emptyApp()
       const st = params.get('estado') as StatusKey | null
       if (st && STATUSES.some((s) => s.key === st) && st !== 'producao') base.status = st
-      base.aiLead = { name: actor.name, email: actor.email }
+      base.owner = { name: actor.name, email: actor.email }
       return base
     }
     return existing ? toInput(existing) : null
@@ -213,9 +212,6 @@ export function AppFormPage() {
       const clean: AppInput = {
         ...form,
         name: form.name.trim(),
-        developers: form.developers.filter((p) => p.name.trim() || p.email.trim()),
-        supportL1: form.supportL1.filter((p) => p.name.trim() || p.email.trim()),
-        supportL2: form.supportL2.filter((p) => p.name.trim() || p.email.trim()),
         links: form.links.filter((l) => l.url.trim()),
       }
       if (isNew) {
@@ -302,7 +298,7 @@ export function AppFormPage() {
             </div>
           </Section>
 
-          <Section id="estado" title="Estado" description="Produção exige pessoas, repositório e ambiente de produção preenchidos.">
+          <Section id="estado" title="Estado" description="Produção exige owner, repositório e ambiente de produção preenchidos.">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Estado" htmlFor="f-status">
                 <Select id="f-status" value={form.status} onChange={(e) => up({ status: e.target.value as StatusKey })}>
@@ -339,24 +335,6 @@ export function AppFormPage() {
                 />
               </Field>
             </div>
-          </Section>
-
-          <Section id="pessoas" title="Pessoas">
-            <Field label="Dono de negócio" htmlFor="f-owner">
-              <PersonInput id="f-owner" value={form.businessOwner} onChange={(p) => up({ businessOwner: p })} />
-            </Field>
-            <Field label="AI Lead" htmlFor="f-lead">
-              <PersonInput id="f-lead" value={form.aiLead} onChange={(p) => up({ aiLead: p })} />
-            </Field>
-            <Field label="Devs" htmlFor="f-devs">
-              <PeopleInput id="f-devs" value={form.developers} onChange={(p) => up({ developers: p })} addLabel="Adicionar dev" />
-            </Field>
-            <Field label="Suporte nível 1" htmlFor="f-l1" hint="Quem recebe primeiro os pedidos dos utilizadores.">
-              <PeopleInput id="f-l1" value={form.supportL1} onChange={(p) => up({ supportL1: p })} addLabel="Adicionar pessoa" />
-            </Field>
-            <Field label="Suporte nível 2" htmlFor="f-l2" hint="Quem resolve quando é preciso mexer no código ou na infraestrutura.">
-              <PeopleInput id="f-l2" value={form.supportL2} onChange={(p) => up({ supportL2: p })} addLabel="Adicionar pessoa" />
-            </Field>
           </Section>
 
           <Section id="stack" title="Stack" description="Escreve e carrega Enter para adicionar. As etiquetas ficam disponíveis para as outras apps.">
@@ -474,6 +452,9 @@ export function AppFormPage() {
           </Section>
 
           <Section id="governo" title="Governance">
+            <Field label="Owner" htmlFor="f-owner" hint="Quem responde pela app.">
+              <PersonInput id="f-owner" value={form.owner} onChange={(p) => up({ owner: p })} />
+            </Field>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Trata dados pessoais (RGPD)?" htmlFor="f-gdpr">
                 <Select id="f-gdpr" value={form.governance.personalData} onChange={(e) => up({ governance: { ...form.governance, personalData: e.target.value as AppInput['governance']['personalData'] } })}>

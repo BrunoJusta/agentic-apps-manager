@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
-import { subscribeApps } from '../data/store'
-import type { AgenticApp } from '../lib/types'
+import { subscribeApps, subscribeRequestsIndex } from '../data/store'
+import type { AgenticApp, AppRequest } from '../lib/types'
 
 interface AppsState {
   apps: AgenticApp[]
   loading: boolean
   error: string | null
   byId: (id: string) => AgenticApp | undefined
+  requests: AppRequest[]
 }
 
 const Ctx = createContext<AppsState | null>(null)
@@ -17,6 +18,7 @@ export function AppsProvider({ children }: { children: ReactNode }) {
   const [apps, setApps] = useState<AgenticApp[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [requests, setRequests] = useState<AppRequest[]>([])
 
   useEffect(() => {
     if (status !== 'ready') return
@@ -34,9 +36,14 @@ export function AppsProvider({ children }: { children: ReactNode }) {
     )
   }, [status])
 
+  useEffect(() => {
+    if (status !== 'ready') return
+    return subscribeRequestsIndex(setRequests, () => setRequests([]))
+  }, [status])
+
   const value = useMemo<AppsState>(
-    () => ({ apps, loading, error, byId: (id) => apps.find((a) => a.id === id) }),
-    [apps, loading, error],
+    () => ({ apps, loading, error, byId: (id) => apps.find((a) => a.id === id), requests }),
+    [apps, loading, error, requests],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

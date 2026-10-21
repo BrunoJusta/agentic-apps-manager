@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
 import {
+  ChatCircleText,
   Info,
   HardDrives,
-  UsersThree,
   ShieldCheck,
   ArrowLeft,
   Copy,
@@ -32,11 +32,12 @@ import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
 import { FilterChip } from '../components/FiltersBar'
 import { AppIcon, PriorityIcon, rotationDue } from '../components/AppCard'
 import { EnvPanel } from '../components/EnvPanel'
+import { openRequestsCount, RequestsPanel, useAppRequests } from '../components/RequestsPanel'
 
 const TABS = [
   { key: 'geral', label: 'Visão geral', icon: Info },
+  { key: 'pedidos', label: 'Pedidos', icon: ChatCircleText },
   { key: 'ambientes', label: 'Ambientes e cofre', icon: HardDrives },
-  { key: 'pessoas', label: 'Pessoas', icon: UsersThree },
   { key: 'governo', label: 'Governance', icon: ShieldCheck },
   { key: 'historico', label: 'Histórico', icon: ClockCounterClockwise },
 ] as const
@@ -184,8 +185,7 @@ function Overview({ app }: { app: AgenticApp }) {
           <Fact label="Início">{fmtDate(app.startDate)}</Fact>
           <Fact label="Go-live">{fmtDate(app.goLiveDate)}</Fact>
           <Fact label="Utilizadores ativos">{fmtNumber(app.activeUsers)}</Fact>
-          <Fact label="AI Lead">{app.aiLead.name}</Fact>
-          <Fact label="Dono de negócio">{app.businessOwner.name}</Fact>
+          <Fact label="Owner">{app.owner.name}</Fact>
           <Fact label="Repositório">{app.repo.account ? repoAccountLabel(app.repo.account) : ''}</Fact>
           <Fact label="Custo mensal">{fmtEur(app.governance.monthlyCost)}</Fact>
         </dl>
@@ -201,30 +201,16 @@ function Overview({ app }: { app: AgenticApp }) {
   )
 }
 
-function People({ app }: { app: AgenticApp }) {
-  const groups: [string, Person[]][] = [
-    ['Dono de negócio', [app.businessOwner]],
-    ['AI Lead', [app.aiLead]],
-    ['Devs', app.developers],
-    ['Suporte nível 1', app.supportL1],
-    ['Suporte nível 2', app.supportL2],
-  ]
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {groups.map(([label, people]) => (
-        <Panel key={label} className="p-4">
-          <h2 className="font-display text-[13px] font-semibold text-ink">{label}</h2>
-          <div className="mt-3 flex flex-col gap-3">{people.length ? people.map((p, i) => <PersonLine key={i} p={p} />) : <p className="text-sm text-ink-tertiary">Por definir</p>}</div>
-        </Panel>
-      ))}
-    </div>
-  )
-}
-
 function Governance({ app }: { app: AgenticApp }) {
   const pd = PERSONAL_DATA.find((p) => p.key === app.governance.personalData)
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <Panel className="p-5 lg:col-span-2">
+        <h2 className="font-display text-[13px] font-semibold text-ink">Owner</h2>
+        <div className="mt-3">
+          <PersonLine p={app.owner} />
+        </div>
+      </Panel>
       <Panel className="p-5">
         <h2 className="font-display text-[13px] font-semibold text-ink">Links</h2>
         {app.links.length ? (
@@ -318,6 +304,7 @@ export function AppDetailPage() {
   const env = (['dev', 'qa', 'prod'].includes(params.get('env') ?? '') ? params.get('env') : app?.environments.prod.enabled ? 'prod' : 'dev') as EnvKey
   const appSecrets = useMemo(() => secrets.filter((s) => s.appId === id), [secrets, id])
   const due = rotationDue(appSecrets)
+  const openReq = openRequestsCount(useAppRequests(id ?? ''))
 
   const setTab = (t: TabKey) =>
     setParams(
@@ -437,6 +424,7 @@ export function AppDetailPage() {
                 <span className="flex items-center gap-1.5">
                   <t.icon size={15} aria-hidden />
                   {t.label}
+                  {t.key === 'pedidos' && openReq ? <span className="count">{openReq}</span> : null}
                 </span>
               </button>
             ))}
@@ -446,6 +434,7 @@ export function AppDetailPage() {
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="py-6">
         {tab === 'geral' ? <Overview app={app} /> : null}
+        {tab === 'pedidos' ? <RequestsPanel app={app} /> : null}
         {tab === 'ambientes' ? (
           <div className="flex flex-col gap-5">
             <Segmented<EnvKey>
@@ -469,7 +458,6 @@ export function AppDetailPage() {
             <EnvPanel key={env} app={app} env={env} />
           </div>
         ) : null}
-        {tab === 'pessoas' ? <People app={app} /> : null}
         {tab === 'governo' ? <Governance app={app} /> : null}
         {tab === 'historico' ? <History appId={app.id} /> : null}
       </div>

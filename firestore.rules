@@ -166,12 +166,35 @@ service cloud.firestore {
         allow delete: if isEditor();
       }
 
+      // Pedidos: qualquer utilizador ativo regista; quem criou pode editar o texto;
+      // Editors e Admins mudam o estado e apagam.
+      match /requests/{requestId} {
+        allow read: if isReader();
+        allow create: if isReader()
+          && request.resource.data.appId == appId
+          && request.resource.data.createdBy == myEmail()
+          && request.resource.data.status == 'novo'
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 300;
+        allow update: if request.resource.data.appId == appId
+          && (isEditor()
+            || (isReader() && resource.data.createdBy == myEmail()
+                && request.resource.data.status == resource.data.status));
+        allow delete: if isEditor();
+      }
+
       match /history/{entryId} {
         allow read: if isReader();
-        allow create: if isEditor() && request.resource.data.by == myEmail();
+        allow create: if isReader() && request.resource.data.by == myEmail();
         allow update: if false;
         allow delete: if isAdmin(); // só ao apagar a app inteira
       }
+    }
+
+    // Leitura em collection group dos pedidos (contagens no board e nas fichas).
+    match /{path=**}/requests/{requestId} {
+      allow read: if isReader();
     }
 
     // Leitura em collection group (índice de secrets no cofre e rotação de chave).

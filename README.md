@@ -69,11 +69,13 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 ## 7. Funcionalidades
 
 - **Apps**: o pipeline em curso, numa só tab com dois modos (Kanban ou Tabela), escolhidos no fim da barra de filtros.
-  - Kanban com as colunas Ideia, Discovery, Em desenvolvimento, QA / UAT e Produção, que se ajustam à largura do ecrã. Arrastar um cartão muda o estado.
+  - Kanban com as colunas Ideia, Discovery, Em desenvolvimento e QA / UAT, que se ajustam à largura do ecrã. Arrastar um cartão muda o estado; largar na zona "Produção" passa a app para Finalizadas.
   - Pode ser agrupado por estado, maturidade, conta do repositório ou área.
   - Os filtros (maturidade, prioridade, conta do repositório, stack, "as minhas") e o modo ficam no URL, por isso dá para partilhar o link.
-- **Finalizadas**: apps em Manutenção ou Descontinuadas saem do board e ficam nesta tab, em cartões ou tabela.
-- **Gate de Produção**: uma app só passa para Produção com dono de negócio, AI Lead, dev, suporte N1, repositório (URL e conta) e ambiente de produção (alojamento, URL e BD) preenchidos.
+- **Finalizadas**: apps em Produção ou Descontinuadas saem do board e ficam nesta tab, em cartões ou tabela.
+- **Pedidos**: em cada app (sobretudo as que estão em produção) registam-se alterações, updates, novos módulos e bugs, com estado (Novo, Em análise, Em curso, Concluído, Rejeitado), prioridade, quem pediu e data pretendida. Qualquer utilizador ativo regista; Editors e Admins mudam o estado.
+- **Owner**: cada app tem um owner, editado e mostrado em Governance.
+- **Gate de Produção**: uma app só passa para Produção com owner, repositório (URL e conta) e ambiente de produção (alojamento, URL e BD) preenchidos.
 - **URLs da app por ambiente** (DEV, QA, PROD): preenchidos na ficha (Editar, secção Ambientes), aparecem em "URLs da app" na visão geral, como atalhos no topo da ficha e como links na tabela.
 - **Ficha da app** com os separadores Visão geral, Ambientes e cofre (DEV, QA e PROD), Pessoas, Links e governo, e Histórico.
 - **Variáveis e secrets por ambiente**:
@@ -96,6 +98,7 @@ vault/meta                    versão da chave do cofre + bloco de verificação
 vaultGrants/{email}           chave do cofre embrulhada para essa pessoa
 apps/{appId}                  ficha da app (inclui ambientes e variáveis)
 apps/{appId}/secrets/{id}     nome, tipo, nota, rodar até, iv, ct (cifrado)
+apps/{appId}/requests/{id}    pedidos (alterações, updates, novos módulos, bugs)
 apps/{appId}/history/{id}     histórico de alterações
 audit/{id}                    registo de auditoria (só acrescentar)
 ```

@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
-import { ArrowUp, CaretDoubleUp, ClockCountdown, GithubLogo, UsersThree } from '@phosphor-icons/react'
+import { ArrowUp, CaretDoubleUp, ChatCircleText, ClockCountdown, GithubLogo, UsersThree } from '@phosphor-icons/react'
+import { useApps } from '../context/AppsContext'
 import type { AgenticApp, SecretDoc } from '../lib/types'
 import { allTags, daysUntil } from '../lib/app-utils'
-import { ENVS, maturityLabel, priorityLabel, ROTATION_WARNING_DAYS, statusLabel } from '../lib/constants'
+import { ENVS, isRequestOpen, maturityLabel, priorityLabel, ROTATION_WARNING_DAYS, statusLabel } from '../lib/constants'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
 import { fmtNumber } from '../lib/format'
 import { trackSpotlight } from '../lib/spotlight'
@@ -59,6 +60,8 @@ export const appColor = (app: AgenticApp) => areaColor(app.area)
 export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; secrets: SecretDoc[]; showStatus?: boolean }) {
   const tags = allTags(app)
   const due = rotationDue(secrets)
+  const { requests } = useApps()
+  const openReq = requests.filter((r) => r.appId === app.id && isRequestOpen(r.status)).length
   return (
     <>
       <div className="cbody">
@@ -105,6 +108,12 @@ export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; sec
           <span className="flex items-center gap-1 font-mono tabular" title="Utilizadores ativos">
             <UsersThree size={12} aria-hidden />
             {fmtNumber(app.activeUsers)}
+          </span>
+        ) : null}
+        {openReq ? (
+          <span className="flex items-center gap-1 font-mono" title={`${openReq} pedido(s) em aberto`}>
+            <ChatCircleText size={12} aria-hidden />
+            {openReq}
           </span>
         ) : null}
         {due.length ? (
