@@ -380,7 +380,7 @@ export function AppsPage() {
         open={!!gate}
         onClose={() => setGate(null)}
         title={`${gate?.app.name ?? ''} ainda não está pronta para Produção`}
-        description="Para passar para Produção, a ficha tem de ter o owner, o repositório e o ambiente de produção preenchidos."
+        description="Para passar para Produção, a ficha tem de ter o owner e o ambiente de produção preenchidos. O repositório é opcional."
         footer={
           <>
             <Button variant="ghost" onClick={() => setGate(null)}>

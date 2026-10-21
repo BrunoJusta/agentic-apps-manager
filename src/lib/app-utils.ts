@@ -74,15 +74,13 @@ export function allTags(app: AgenticApp): string[] {
 const filled = (s: string | undefined | null) => !!s && s.trim().length > 0
 
 /**
- * Checklist de go-live. Uma app só passa para Produção com isto completo:
- * pessoas, repositório e ambiente de produção.
+ * Checklist de go-live. Uma app só passa para Produção com owner e ambiente de produção.
+ * O repositório é opcional: apps do Google AI Studio têm o código dentro do ambiente Google.
  */
-export function productionReadiness(app: Pick<AgenticApp, 'owner' | 'repo' | 'environments'>) {
+export function productionReadiness(app: Pick<AgenticApp, 'owner' | 'environments'>) {
   const prod = app.environments.prod
   const items = [
     { ok: filled(app.owner.name), label: 'Owner definido' },
-    { ok: filled(app.repo.url), label: 'Repositório com URL' },
-    { ok: filled(app.repo.account), label: 'Conta do repositório (pessoal ou Sogrape)' },
     { ok: prod.enabled, label: 'Ambiente de produção ativo' },
     { ok: prod.enabled && filled(prod.hosting), label: 'Alojamento de produção' },
     { ok: prod.enabled && filled(prod.appUrl), label: 'URL da app em produção' },

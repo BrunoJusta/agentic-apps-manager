@@ -298,7 +298,7 @@ export function AppFormPage() {
             </div>
           </Section>
 
-          <Section id="estado" title="Estado" description="Produção exige owner, repositório e ambiente de produção preenchidos.">
+          <Section id="estado" title="Estado" description="Produção exige owner e ambiente de produção preenchidos. O repositório é opcional.">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Estado" htmlFor="f-status">
                 <Select id="f-status" value={form.status} onChange={(e) => up({ status: e.target.value as StatusKey })}>
@@ -406,8 +406,8 @@ export function AppFormPage() {
             })}
           </Section>
 
-          <Section id="repositorio" title="Repositório">
-            <Field label="URL do repositório" htmlFor="f-repo">
+          <Section id="repositorio" title="Repositório" description="Opcional. Apps feitas no Google AI Studio podem não ter repositório: escolhe Google AI Studio como conta e deixa o URL vazio.">
+            <Field label="URL do repositório" htmlFor="f-repo" hint="Opcional.">
               <Input id="f-repo" type="url" value={form.repo.url} onChange={(e) => up({ repo: { ...form.repo, url: e.target.value } })} placeholder="https://github.com/…" spellCheck={false} />
             </Field>
             <div className="flex flex-col gap-1.5">

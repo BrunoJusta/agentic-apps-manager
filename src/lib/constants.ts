@@ -56,6 +56,7 @@ export const ENVS: { key: EnvKey; label: string; short: string }[] = [
 export const REPO_ACCOUNTS: { key: RepoAccount; label: string }[] = [
   { key: 'sogrape', label: 'Organização Sogrape' },
   { key: 'pessoal', label: 'Conta pessoal' },
+  { key: 'ai_studio', label: 'Google AI Studio' },
 ]
 
 export const PERSONAL_DATA: { key: PersonalData; label: string }[] = [

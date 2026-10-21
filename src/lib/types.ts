@@ -13,7 +13,7 @@ export type StatusKey =
 export type MaturityKey = 'poc' | 'piloto' | 'mvp' | 'estavel' | 'escala'
 export type PriorityKey = 'baixa' | 'media' | 'alta' | 'critica'
 export type EnvKey = 'dev' | 'qa' | 'prod'
-export type RepoAccount = 'pessoal' | 'sogrape' | ''
+export type RepoAccount = 'pessoal' | 'sogrape' | 'ai_studio' | ''
 export type PersonalData = 'sim' | 'nao' | 'por_avaliar'
 
 export interface Person {

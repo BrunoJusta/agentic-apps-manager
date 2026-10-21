@@ -75,7 +75,7 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 - **Finalizadas**: apps em Produção ou Descontinuadas saem do board e ficam nesta tab, em cartões ou tabela.
 - **Pedidos**: em cada app (sobretudo as que estão em produção) registam-se alterações, updates, novos módulos e bugs, com estado (Novo, Em análise, Em curso, Concluído, Rejeitado), prioridade, quem pediu e data pretendida. Qualquer utilizador ativo regista; Editors e Admins mudam o estado.
 - **Owner**: cada app tem um owner, editado e mostrado em Governance.
-- **Gate de Produção**: uma app só passa para Produção com owner, repositório (URL e conta) e ambiente de produção (alojamento, URL e BD) preenchidos.
+- **Gate de Produção**: uma app só passa para Produção com owner e ambiente de produção (alojamento, URL e BD) preenchidos. O repositório é opcional, porque algumas apps do Google AI Studio têm o código dentro do ambiente Google; nesse caso escolhe a conta "Google AI Studio".
 - **URLs da app por ambiente** (DEV, QA, PROD): preenchidos na ficha (Editar, secção Ambientes), aparecem em "URLs da app" na visão geral, como atalhos no topo da ficha e como links na tabela.
 - **Ficha da app** com os separadores Visão geral, Ambientes e cofre (DEV, QA e PROD), Pessoas, Links e governo, e Histórico.
 - **Variáveis e secrets por ambiente**:
