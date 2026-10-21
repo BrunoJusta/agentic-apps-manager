@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowsClockwise, Bug, ChatCircleText, PencilSimple, PencilSimpleLine, Plus, PuzzlePiece, Trash } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
@@ -12,7 +13,7 @@ import { PriorityIcon } from './AppCard'
 import { FilterChip } from './FiltersBar'
 import { Badge, Button, ConfirmDialog, Dialog, EmptyState, Field, IconButton, Input, Panel, PersonInput, Segmented, Select, Textarea } from './ui'
 
-const TYPE_ICONS: Record<RequestType, typeof Bug> = {
+export const TYPE_ICONS: Record<RequestType, typeof Bug> = {
   alteracao: PencilSimpleLine,
   update: ArrowsClockwise,
   modulo: PuzzlePiece,
@@ -28,7 +29,7 @@ export function openRequestsCount(requests: AppRequest[]) {
   return requests.filter((r) => isRequestOpen(r.status)).length
 }
 
-function RequestDialog({ open, onClose, app, editing }: { open: boolean; onClose: () => void; app: AgenticApp; editing: AppRequest | null }) {
+export function RequestDialog({ open, onClose, app, editing }: { open: boolean; onClose: () => void; app: AgenticApp; editing: AppRequest | null }) {
   const { actor, name, email } = useAuth()
   const toast = useToast()
   const [type, setType] = useState<RequestType>('alteracao')
@@ -193,19 +194,21 @@ export function RequestsPanel({ app }: { app: AgenticApp }) {
           />
         </Panel>
       ) : (
-        <Panel className="overflow-hidden">
+        <Panel>
           <ul className="divide-y divide-hairline">
             {rows.map((r) => {
               const Icon = TYPE_ICONS[r.type] ?? PencilSimpleLine
               const mine = r.createdBy === actor.email
               return (
-                <li key={r.id} className="group flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-start sm:gap-4">
+                <li key={r.id} className="group relative flex flex-col gap-3 px-4 py-3.5 transition-colors first:rounded-t-card last:rounded-b-card hover:bg-surface-2/60 sm:flex-row sm:items-start sm:gap-4">
                   <span className="mt-0.5 hidden size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink sm:flex" aria-hidden>
                     <Icon size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-display text-[14.5px] font-semibold tracking-[-0.01em] text-ink">{r.title}</p>
+                      <Link to={`/apps/${app.id}/pedidos/${r.id}`} className="font-display text-[14.5px] font-semibold tracking-[-0.01em] text-ink after:absolute after:inset-0 after:content-[''] hover:underline hover:underline-offset-2">
+                        {r.title}
+                      </Link>
                       <PriorityIcon priority={r.priority} />
                     </div>
                     {r.description ? <p className="mt-1 line-clamp-3 max-w-[75ch] text-[13.5px] whitespace-pre-line text-ink-subtle">{r.description}</p> : null}
@@ -219,7 +222,7 @@ export function RequestsPanel({ app }: { app: AgenticApp }) {
                       </span>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="relative z-10 flex shrink-0 items-center gap-1">
                     {canEdit ? (
                       <FilterChip
                         icon={<span className="dot" style={{ ['--c' as string]: REQUEST_STATUS_COLORS[r.status] }} />}

@@ -39,6 +39,8 @@ export function FilterChip({
   align?: 'left' | 'right'
 }) {
   const [open, setOpen] = useState(false)
+  // Abre para cima quando não há espaço por baixo (por exemplo, no fim da página).
+  const [up, setUp] = useState(false)
   const [q, setQ] = useState('')
   const ref = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -93,7 +95,14 @@ export function FilterChip({
           highlighted ? 'bg-ink text-canvas' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
         )}
       >
-        <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={clsx('flex h-full items-center gap-1.5 rounded-full pl-3 transition-transform active:scale-[0.97]', active && clearable ? 'pr-1.5' : 'pr-3')}>
+        <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => {
+            if (!open && ref.current) {
+              const r = ref.current.getBoundingClientRect()
+              const need = Math.min(options.length * 38 + (searchable ? 48 : 0) + 24, 360)
+              setUp(window.innerHeight - r.bottom < need && r.top > window.innerHeight - r.bottom)
+            }
+            setOpen((o) => !o)
+          }} className={clsx('flex h-full items-center gap-1.5 rounded-full pl-3 transition-transform active:scale-[0.97]', active && clearable ? 'pr-1.5' : 'pr-3')}>
           <span aria-hidden className={highlighted ? 'text-canvas/70' : 'text-ink-subtle'}>
             {icon}
           </span>
@@ -114,7 +123,7 @@ export function FilterChip({
       </div>
 
       {open ? (
-        <div ref={listRef} role="menu" aria-label={label} onKeyDown={moveFocus} className={clsx('enter absolute top-full z-40', align === 'right' ? 'right-0' : 'left-0', 'mt-2 w-60 overflow-hidden rounded-xl bg-surface-1 p-1.5 shadow-panel')}>
+        <div ref={listRef} role="menu" aria-label={label} onKeyDown={moveFocus} className={clsx('enter absolute z-40', up ? 'bottom-full mb-2' : 'top-full mt-2', align === 'right' ? 'right-0' : 'left-0', 'w-60 overflow-hidden rounded-xl bg-surface-1 p-1.5 shadow-panel')}>
           {searchable ? (
             <div className="mb-1 flex items-center gap-2 border-b border-hairline px-2 pb-1.5">
               <MagnifyingGlass size={13} className="text-ink-tertiary" aria-hidden />
