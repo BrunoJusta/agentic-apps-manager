@@ -33,7 +33,7 @@ const TABS = [
   { key: 'geral', label: 'Visão geral' },
   { key: 'ambientes', label: 'Ambientes e cofre' },
   { key: 'pessoas', label: 'Pessoas' },
-  { key: 'governo', label: 'Links e governo' },
+  { key: 'governo', label: 'Governance' },
   { key: 'historico', label: 'Histórico' },
 ] as const
 type TabKey = (typeof TABS)[number]['key']
@@ -242,7 +242,7 @@ function Governance({ app }: { app: AgenticApp }) {
         )}
       </Panel>
       <Panel className="p-5">
-        <h2 className="font-display text-[13px] font-semibold text-ink">Governo</h2>
+        <h2 className="font-display text-[13px] font-semibold text-ink">Governance</h2>
         <dl className="mt-1 divide-y divide-hairline">
           <Fact label="Dados pessoais (RGPD)">
             <Badge tone={app.governance.personalData === 'sim' ? 'warning' : app.governance.personalData === 'nao' ? 'success' : 'neutral'}>{pd?.label}</Badge>
@@ -370,7 +370,7 @@ export function AppDetailPage() {
         <div className="relative">
           <Link to="/" className="inline-flex items-center gap-1 rounded-full font-display text-[13px] font-medium text-ink-subtle hover:text-ink">
             <ArrowLeft size={14} aria-hidden />
-            Board
+            Apps
           </Link>
           <div className="mt-3 flex flex-wrap items-start gap-4">
             <div className="min-w-0 flex-1">

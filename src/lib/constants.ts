@@ -27,6 +27,10 @@ export const STATUSES: { key: StatusKey; label: string; hint: string }[] = [
   { key: 'descontinuada', label: 'Descontinuada', hint: 'Desligada ou substituída' },
 ]
 
+/** Fases que saem do board e vivem na tab Finalizadas. */
+export const FINISHED_STATUSES: StatusKey[] = ['manutencao', 'descontinuada']
+export const isFinished = (s: StatusKey) => FINISHED_STATUSES.includes(s)
+
 export const MATURITIES: { key: MaturityKey; label: string }[] = [
   { key: 'poc', label: 'PoC' },
   { key: 'piloto', label: 'Piloto' },

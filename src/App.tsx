@@ -5,8 +5,8 @@ import { AppsProvider } from './context/AppsContext'
 import { ToastProvider } from './context/ToastContext'
 import { Layout } from './components/Layout'
 import { ErrorScreen, LoadingScreen, LoginScreen, NoAccessScreen } from './pages/Gate'
-import { BoardPage } from './pages/Board'
-import { TablePage } from './pages/TablePage'
+import { AppsPage } from './pages/Board'
+import { FinishedPage } from './pages/FinishedPage'
 import { AppDetailPage } from './pages/AppDetail'
 import { AppFormPage } from './pages/AppForm'
 import { VaultPage } from './pages/VaultPage'
@@ -22,8 +22,9 @@ const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: '/', element: <BoardPage /> },
-      { path: '/tabela', element: <TablePage /> },
+      { path: '/', element: <AppsPage /> },
+      { path: '/finalizadas', element: <FinishedPage /> },
+      { path: '/tabela', element: <Navigate to="/?vista=tabela" replace /> },
       { path: '/apps/nova', element: <AppFormPage /> },
       { path: '/apps/:id', element: <AppDetailPage /> },
       { path: '/apps/:id/editar', element: <AppFormPage /> },

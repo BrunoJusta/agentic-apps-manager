@@ -14,14 +14,14 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { DownloadSimple, Kanban, Plus, UploadSimple, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { DownloadSimple, Kanban, Plus, Rows, UploadSimple, CheckCircle, XCircle } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useVault } from '../context/VaultContext'
 import { useToast } from '../context/ToastContext'
-import { applyFilters, useFilters } from '../lib/filters'
+import { applyFilters, useFilters, type ViewMode } from '../lib/filters'
 import { productionReadiness, sortForBoard, toInput } from '../lib/app-utils'
-import { MATURITIES, REPO_ACCOUNTS, STATUSES, statusLabel } from '../lib/constants'
+import { isFinished, MATURITIES, REPO_ACCOUNTS, STATUSES, statusLabel } from '../lib/constants'
 import { moveApp } from '../data/store'
 import type { AgenticApp, MaturityKey, SecretDoc, StatusKey } from '../lib/types'
 import { PageHeader } from '../components/Layout'
@@ -29,7 +29,8 @@ import { FiltersBar, GroupByChip } from '../components/FiltersBar'
 import { AppCardBody, AppCardLink, appColor } from '../components/AppCard'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
 import { ImportJsonDialog } from '../components/ImportJsonDialog'
-import { Button, Dialog, Dot, EmptyState, IconButton, Skeleton } from '../components/ui'
+import { Button, Dialog, Dot, EmptyState, IconButton, Segmented, Skeleton } from '../components/ui'
+import { AppsTable } from '../components/AppsTable'
 import { trackSpotlight } from '../lib/spotlight'
 
 interface Column {
@@ -64,7 +65,7 @@ function DraggableCard({ app, secrets, index, disabled, animate }: { app: Agenti
 function DroppableColumn({ col, count, droppable, children, onAdd }: { col: Column; count: number; droppable: boolean; children: React.ReactNode; onAdd?: () => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key, disabled: !droppable })
   return (
-    <section aria-label={`${col.label}, ${count} apps`} className="flex w-[296px] shrink-0 snap-start flex-col md:w-[312px]">
+    <section aria-label={`${col.label}, ${count} apps`} className="flex min-w-[248px] flex-1 basis-0 flex-col">
       <header className="flex h-10 items-center gap-2 px-1.5">
         {col.color ? <Dot color={col.color} /> : null}
         <h2 className="font-display text-[13.5px] font-semibold tracking-[-0.01em] text-ink" title={col.hint}>
@@ -87,7 +88,7 @@ function DroppableColumn({ col, count, droppable, children, onAdd }: { col: Colu
   )
 }
 
-export function BoardPage() {
+export function AppsPage() {
   const { apps, loading, error } = useApps()
   const { canEdit, email, actor } = useAuth()
   const { secrets } = useVault()
@@ -134,20 +135,24 @@ export function BoardPage() {
     return m
   }, [secrets])
 
+  // O board só mostra apps em curso; Manutenção e Descontinuada vivem na tab Finalizadas.
+  const activeApps = useMemo(() => apps.filter((a) => !isFinished(a.status)), [apps])
+  const finishedCount = apps.length - activeApps.length
+
   const visible = useMemo(() => {
-    const withOverride = apps.map((a) => (override[a.id] && field ? { ...a, [field]: override[a.id] } : a))
+    const withOverride = activeApps.map((a) => (override[a.id] && field ? { ...a, [field]: override[a.id] } : a))
     return applyFilters(withOverride, filters, email).sort(sortForBoard)
-  }, [apps, override, field, filters, email])
+  }, [activeApps, override, field, filters, email])
 
   const columns: Column[] = useMemo(() => {
     if (group === 'maturity') return MATURITIES.map((m) => ({ key: m.key, label: m.label }))
     if (group === 'account') return [...REPO_ACCOUNTS.map((r) => ({ key: r.key, label: r.label })), { key: '', label: 'Sem conta definida' }]
     if (group === 'area') {
-      const areas = [...new Set(apps.map((a) => a.area.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'))
+      const areas = [...new Set(activeApps.map((a) => a.area.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'))
       return [...areas.map((a) => ({ key: a, label: a, color: areaColor(a) })), { key: '', label: 'Sem área' }]
     }
-    return STATUSES.filter((s) => !(filters.hideArchived && s.key === 'descontinuada')).map((s) => ({ key: s.key, label: s.label, hint: s.hint, color: STATUS_COLORS[s.key] }))
-  }, [group, apps, filters.hideArchived])
+    return STATUSES.filter((s) => !isFinished(s.key)).map((s) => ({ key: s.key, label: s.label, hint: s.hint, color: STATUS_COLORS[s.key] }))
+  }, [group, activeApps])
 
   const keyOf = (a: AgenticApp) => (group === 'maturity' ? a.maturity : group === 'account' ? a.repo.account : group === 'area' ? a.area.trim() : a.status)
 
@@ -198,8 +203,24 @@ export function BoardPage() {
 
   const header = (
     <PageHeader
-      title="Board"
-      description={loading ? undefined : `${apps.length} ${apps.length === 1 ? 'app' : 'apps'} no total${filtering ? `, ${visible.length} com os filtros atuais` : ''}.`}
+      title="Apps"
+      description={
+        loading ? undefined : (
+          <>
+            {activeApps.length} {activeApps.length === 1 ? 'app em curso' : 'apps em curso'}
+            {filtering ? `, ${visible.length} com os filtros atuais` : ''}.
+            {finishedCount ? (
+              <>
+                {' '}
+                <Link to="/finalizadas" className="underline decoration-hairline-strong underline-offset-2 hover:text-ink hover:decoration-ink">
+                  {finishedCount} {finishedCount === 1 ? 'finalizada' : 'finalizadas'}
+                </Link>
+                .
+              </>
+            ) : null}
+          </>
+        )
+      }
       actions={
         <>
           {canEdit ? (
@@ -221,7 +242,22 @@ export function BoardPage() {
         </>
       }
     >
-      <FiltersBar trailing={<GroupByChip />} />
+      <FiltersBar
+        trailing={
+          <div className="flex items-center gap-2">
+            {filters.view === 'kanban' ? <GroupByChip /> : null}
+            <Segmented<ViewMode>
+              label="Vista"
+              value={filters.view}
+              onChange={(v) => set({ view: v })}
+              options={[
+                { value: 'kanban', title: 'Kanban', label: (<><Kanban size={14} aria-hidden /><span className="hidden lg:inline">Kanban</span></>) },
+                { value: 'tabela', title: 'Tabela', label: (<><Rows size={14} aria-hidden /><span className="hidden lg:inline">Tabela</span></>) },
+              ]}
+            />
+          </div>
+        }
+      />
     </PageHeader>
   )
 
@@ -238,9 +274,9 @@ export function BoardPage() {
     <>
       {header}
       {loading ? (
-        <div className="flex gap-4 overflow-hidden py-1" aria-label="A carregar o board" role="status">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex w-[300px] shrink-0 flex-col gap-2">
+        <div className="flex gap-3 overflow-hidden py-1" aria-label="A carregar o board" role="status">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex min-w-[248px] flex-1 basis-0 flex-col gap-2">
               <Skeleton className="h-5 w-28" />
               <Skeleton className="h-32" />
               <Skeleton className="h-28" />
@@ -267,9 +303,13 @@ export function BoardPage() {
             ) : undefined
           }
         />
+      ) : filters.view === 'tabela' ? (
+        <div className="pb-10">
+          <AppsTable apps={visible} empty={<EmptyState title="Nenhuma app corresponde aos filtros" action={<Button onClick={clear}>Limpar filtros</Button>} />} />
+        </div>
       ) : (
         <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-          <div className="scroll-x -mx-1 flex snap-x gap-4 overflow-x-auto px-1 pt-1 pb-10">
+          <div className="scroll-x -mx-1 flex gap-3 overflow-x-auto px-1 pt-1 pb-10">
             {columns.map((col) => {
               const items = visible.filter((a) => keyOf(a) === col.key)
               return (
@@ -289,13 +329,6 @@ export function BoardPage() {
                 </DroppableColumn>
               )
             })}
-            {group === 'status' ? (
-              <div className="flex w-40 shrink-0 items-start pt-1">
-                <button type="button" onClick={() => set({ hideArchived: !filters.hideArchived })} className="rounded-full px-2.5 py-1.5 font-display text-[12.5px] font-medium text-ink-subtle hover:bg-sel hover:text-ink">
-                  {filters.hideArchived ? 'Mostrar descontinuadas' : 'Esconder descontinuadas'}
-                </button>
-              </div>
-            ) : null}
           </div>
           <DragOverlay dropAnimation={null}>
             {dragging ? (
@@ -307,7 +340,7 @@ export function BoardPage() {
         </DndContext>
       )}
 
-      {filtering && !loading && apps.length > 0 && visible.length === 0 ? (
+      {filtering && !loading && apps.length > 0 && visible.length === 0 && filters.view === 'kanban' ? (
         <div>
           <EmptyState title="Nenhuma app corresponde aos filtros" action={<Button onClick={clear}>Limpar filtros</Button>} />
         </div>

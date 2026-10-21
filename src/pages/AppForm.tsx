@@ -32,7 +32,7 @@ const SECTIONS = [
   { id: 'ambientes', label: 'Ambientes' },
   { id: 'repositorio', label: 'Repositório' },
   { id: 'links', label: 'Links' },
-  { id: 'governo', label: 'Governo' },
+  { id: 'governo', label: 'Governance' },
 ]
 
 function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: ReactNode }) {
@@ -190,7 +190,7 @@ export function AppFormPage() {
       <div className="pt-8 pb-6">
         <Link to={backTo} className="inline-flex items-center gap-1 rounded-full font-display text-[13px] font-medium text-ink-subtle hover:text-ink">
           <ArrowLeft size={14} aria-hidden />
-          {isNew ? 'Board' : initial?.name}
+          {isNew ? 'Apps' : initial?.name}
         </Link>
         <h1 className="mt-3 font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink min-[760px]:text-[32px] min-[760px]:leading-10">{isNew ? 'Nova app' : 'Editar ficha'}</h1>
       </div>
@@ -425,7 +425,7 @@ export function AppFormPage() {
             </div>
           </Section>
 
-          <Section id="governo" title="Governo">
+          <Section id="governo" title="Governance">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Trata dados pessoais (RGPD)?" htmlFor="f-gdpr">
                 <Select id="f-gdpr" value={form.governance.personalData} onChange={(e) => up({ governance: { ...form.governance, personalData: e.target.value as AppInput['governance']['personalData'] } })}>

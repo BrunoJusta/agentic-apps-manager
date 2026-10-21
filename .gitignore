@@ -29,3 +29,6 @@ dist-ssr
 !.env.example
 *token*.txt
 .firebase
+
+# Dados locais de importação
+seed/

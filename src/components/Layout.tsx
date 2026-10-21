@@ -98,9 +98,9 @@ export function Layout() {
   const tabs = (
     <>
       <TopTab to="/" end>
-        Board
+        Apps
       </TopTab>
-      <TopTab to="/tabela">Tabela</TopTab>
+      <TopTab to="/finalizadas">Finalizadas</TopTab>
       {canEdit ? <TopTab to="/cofre">Cofre</TopTab> : null}
       {isAdmin ? <TopTab to="/utilizadores">Utilizadores</TopTab> : null}
     </>
@@ -116,7 +116,7 @@ export function Layout() {
         className="sticky top-0 z-30 border-b border-hairline backdrop-blur-[10px]"
         style={{ background: 'color-mix(in srgb, var(--canvas) 88%, transparent)', paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="mx-auto flex h-[60px] max-w-[1320px] items-center gap-4" style={{ paddingLeft: 'max(var(--gutter), env(safe-area-inset-left))', paddingRight: 'max(var(--gutter), env(safe-area-inset-right))' }}>
+        <div className="flex h-[60px] items-center gap-4" style={{ paddingLeft: 'max(var(--gutter), env(safe-area-inset-left))', paddingRight: 'max(var(--gutter), env(safe-area-inset-right))' }}>
           <NavLink to="/" className="flex shrink-0 items-center gap-2.5 rounded-lg">
             <BrandMark />
             <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Apps</span>
@@ -157,7 +157,7 @@ export function Layout() {
         </nav>
       </header>
 
-      <main id="main" className="mx-auto max-w-[1320px] pb-16" style={{ paddingLeft: 'max(var(--gutter), env(safe-area-inset-left))', paddingRight: 'max(var(--gutter), env(safe-area-inset-right))' }}>
+      <main id="main" className="pb-16" style={{ paddingLeft: 'max(var(--gutter), env(safe-area-inset-left))', paddingRight: 'max(var(--gutter), env(safe-area-inset-right))' }}>
         <Outlet />
       </main>
 

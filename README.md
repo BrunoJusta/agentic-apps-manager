@@ -68,9 +68,11 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 
 ## 7. Funcionalidades
 
-- **Board Kanban** com as colunas Ideia, Discovery, Em desenvolvimento, QA / UAT, Produção, Manutenção e Descontinuada. Arrastar um cartão muda o estado.
+- **Apps**: o pipeline em curso, numa só tab com dois modos (Kanban ou Tabela), escolhidos no fim da barra de filtros.
+  - Kanban com as colunas Ideia, Discovery, Em desenvolvimento, QA / UAT e Produção, que se ajustam à largura do ecrã. Arrastar um cartão muda o estado.
   - Pode ser agrupado por estado, maturidade, conta do repositório ou área.
-  - Os filtros (maturidade, prioridade, conta do repositório, stack, "as minhas") ficam no URL, por isso dá para partilhar o link.
+  - Os filtros (maturidade, prioridade, conta do repositório, stack, "as minhas") e o modo ficam no URL, por isso dá para partilhar o link.
+- **Finalizadas**: apps em Manutenção ou Descontinuadas saem do board e ficam nesta tab, em cartões ou tabela.
 - **Gate de Produção**: uma app só passa para Produção com dono de negócio, AI Lead, dev, suporte N1, repositório (URL e conta) e ambiente de produção (alojamento, URL e BD) preenchidos.
 - **URLs da app por ambiente** (DEV, QA, PROD): preenchidos na ficha (Editar, secção Ambientes), aparecem em "URLs da app" na visão geral, como atalhos no topo da ficha e como links na tabela.
 - **Ficha da app** com os separadores Visão geral, Ambientes e cofre (DEV, QA e PROD), Pessoas, Links e governo, e Histórico.
@@ -79,7 +81,7 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
   - Exportar `.env` (registado na auditoria).
   - Data de "rodar até", com aviso a 30 dias.
 - **Pesquisa global** com Ctrl K ou ⌘K: apps, nomes de secrets e nomes de variáveis. Os valores nunca são pesquisáveis.
-- **Tabela** ordenável e **importar e exportar JSON** de apps (sem secrets).
+- **Importar e exportar JSON** de apps (sem secrets).
 
 ### Linguagem visual
 

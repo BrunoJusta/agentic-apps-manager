@@ -50,6 +50,11 @@
     --gutter: 16px;
   }
 }
+@media (min-width: 1280px) {
+  :root {
+    --gutter: 32px;
+  }
+}
 
 @theme inline {
   --color-canvas: var(--canvas);
@@ -189,8 +194,9 @@ a.card:hover,
 }
 .card .cfoot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 6px 12px;
   border-top: 1px solid var(--hairline);
   padding: 12px 14px;
 }

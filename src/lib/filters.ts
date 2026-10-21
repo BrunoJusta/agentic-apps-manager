@@ -4,6 +4,7 @@ import { allTags, isMember, matchesSearch } from './app-utils'
 import type { AgenticApp, MaturityKey, PriorityKey, RepoAccount } from './types'
 
 export type GroupBy = 'status' | 'maturity' | 'account' | 'area'
+export type ViewMode = 'kanban' | 'tabela'
 
 export interface Filters {
   q: string
@@ -14,6 +15,7 @@ export interface Filters {
   mine: boolean
   hideArchived: boolean
   group: GroupBy
+  view: ViewMode
 }
 
 /** Filtros vivem no URL: sobrevivem a refresh e dá para partilhar o link. */
@@ -29,6 +31,7 @@ export function useFilters() {
       mine: params.get('minhas') === '1',
       hideArchived: params.get('arquivadas') !== '1',
       group: ((params.get('agrupar') as GroupBy) || 'status') as GroupBy,
+      view: params.get('vista') === 'tabela' ? 'tabela' : 'kanban',
     }),
     [params],
   )
@@ -46,6 +49,7 @@ export function useFilters() {
             mine: 'minhas',
             hideArchived: 'arquivadas',
             group: 'agrupar',
+            view: 'vista',
           }
           for (const [k, v] of Object.entries(patch) as [keyof Filters, unknown][]) {
             const key = map[k]
@@ -53,6 +57,7 @@ export function useFilters() {
             if (k === 'mine') val = v ? '1' : ''
             else if (k === 'hideArchived') val = v ? '' : '1'
             else if (k === 'group') val = v === 'status' ? '' : String(v)
+            else if (k === 'view') val = v === 'kanban' ? '' : String(v)
             else val = String(v ?? '')
             if (val) next.set(key, val)
             else next.delete(key)
