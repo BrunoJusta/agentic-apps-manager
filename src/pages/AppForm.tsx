@@ -365,7 +365,7 @@ export function AppFormPage() {
                       <Field label="URL do painel de alojamento" htmlFor={`f-${env.key}-hosturl`}>
                         <Input id={`f-${env.key}-hosturl`} type="url" value={e.hostingUrl} onChange={(ev) => upEnv(env.key, { hostingUrl: ev.target.value })} placeholder="https://vercel.com/…" spellCheck={false} />
                       </Field>
-                      <Field label="URL da app" htmlFor={`f-${env.key}-appurl`} className="sm:col-span-2">
+                      <Field label={`URL da app em ${env.short}`} hint="O endereço onde a app corre neste ambiente." htmlFor={`f-${env.key}-appurl`} className="sm:col-span-2">
                         <Input id={`f-${env.key}-appurl`} type="url" value={e.appUrl} onChange={(ev) => upEnv(env.key, { appUrl: ev.target.value })} placeholder="https://" spellCheck={false} />
                       </Field>
                       <Field label="Notas" htmlFor={`f-${env.key}-notes`} className="sm:col-span-2">

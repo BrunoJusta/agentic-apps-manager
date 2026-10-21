@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
 import {
   ArrowLeft,
+  Copy,
   ArrowSquareOut,
   CheckCircle,
   Circle,
@@ -63,6 +64,70 @@ function PersonLine({ p }: { p: Person }) {
   )
 }
 
+/** Links rápidos para a app em cada ambiente (só os que têm URL). */
+function EnvUrlLinks({ app }: { app: AgenticApp }) {
+  const links = ENVS.filter((e) => app.environments[e.key].enabled && app.environments[e.key].appUrl)
+  if (!links.length) return null
+  return (
+    <div className="seg" role="group" aria-label="Abrir a app">
+      {links.map((e) => (
+        <a
+          key={e.key}
+          href={app.environments[e.key].appUrl}
+          target="_blank"
+          rel="noreferrer"
+          title={`Abrir em ${e.label}: ${app.environments[e.key].appUrl}`}
+          className="inline-flex h-[30px] items-center gap-1.5 rounded-full px-3 font-display text-[13px] font-medium text-ink-muted transition-colors duration-150 hover:bg-sel hover:text-ink"
+        >
+          <span className="font-mono text-[11.5px] tracking-wide">{e.short}</span>
+          <ArrowSquareOut size={13} aria-hidden />
+        </a>
+      ))}
+    </div>
+  )
+}
+
+/** URLs da app por ambiente, com copiar. */
+function EnvUrls({ app }: { app: AgenticApp }) {
+  const toast = useToast()
+  return (
+    <Panel className="p-5">
+      <h2 className="font-display text-[13px] font-semibold text-ink">URLs da app</h2>
+      <ul className="mt-2 divide-y divide-hairline">
+        {ENVS.map((e) => {
+          const env = app.environments[e.key]
+          return (
+            <li key={e.key} className="flex min-w-0 items-center gap-3 py-2.5">
+              <span className="tg mn w-14 justify-center">{e.short}</span>
+              {env.enabled && env.appUrl ? (
+                <>
+                  <a href={env.appUrl} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-sm text-ink hover:underline">
+                    {env.appUrl}
+                  </a>
+                  <IconButton
+                    label={`Copiar URL de ${e.label}`}
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(env.appUrl)
+                      toast(`URL de ${e.label} copiado.`)
+                    }}
+                  >
+                    <Copy size={14} aria-hidden />
+                  </IconButton>
+                  <a href={env.appUrl} target="_blank" rel="noreferrer" aria-label={`Abrir ${e.label}`} title={`Abrir ${e.label}`} className="inline-flex size-[30px] shrink-0 items-center justify-center rounded-full text-ink-subtle transition-colors hover:bg-sel hover:text-ink">
+                    <ArrowSquareOut size={14} aria-hidden />
+                  </a>
+                </>
+              ) : (
+                <span className="flex-1 text-sm text-ink-tertiary">{env.enabled ? 'Por definir' : 'Este ambiente não existe'}</span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Panel>
+  )
+}
+
 function Overview({ app }: { app: AgenticApp }) {
   const r = productionReadiness(app)
   const done = r.items.filter((i) => i.ok).length
@@ -75,6 +140,7 @@ function Overview({ app }: { app: AgenticApp }) {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_340px]">
       <div className="flex min-w-0 flex-col gap-5">
+        <EnvUrls app={app} />
         <Panel className="p-5">
           <h2 className="font-display text-[13px] font-semibold text-ink">Descrição</h2>
           {app.description ? <p className="mt-2 max-w-[70ch] text-sm leading-relaxed whitespace-pre-line text-ink">{app.description}</p> : <p className="mt-2 text-sm text-ink-tertiary">Ainda sem descrição.</p>}
@@ -296,7 +362,6 @@ export function AppDetailPage() {
     }
   }
 
-  const prodUrl = app.environments.prod.enabled ? app.environments.prod.appUrl : ''
 
   return (
     <div className="enter" style={entityStyle(areaColor(app.area))}>
@@ -337,12 +402,7 @@ export function AppDetailPage() {
                   onChange={(v) => changeStatus(v as StatusKey)}
                 />
               ) : null}
-              {prodUrl ? (
-                <a href={prodUrl} target="_blank" rel="noreferrer" className="inline-flex h-[34px] items-center gap-[7px] rounded-full bg-surface-1 px-3.5 font-display text-[13.5px] font-medium text-ink shadow-ring transition-colors hover:bg-surface-2 active:scale-[0.97]">
-                  <ArrowSquareOut size={14} aria-hidden />
-                  Abrir app
-                </a>
-              ) : null}
+              <EnvUrlLinks app={app} />
               {canEdit ? (
                 <Button variant="primary" onClick={() => navigate(`/apps/${app.id}/editar`)}>
                   <PencilSimple size={14} aria-hidden />

@@ -46,7 +46,7 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 
 ## 5. Papéis
 
-| Papel  | Board e fichas | Editar apps | Secrets | Utilizadores, auditoria, rotação |
+| Papel  | Board e fichas | Editar apps | Secrets | Utilizadores e rotação |
 |--------|----------------|-------------|---------|----------------------------------|
 | Viewer | Sim            | Não         | Nunca (nem os nomes) | Não                    |
 | Editor | Sim            | Sim         | Se um Admin lhe der acesso ao cofre | Não     |
@@ -62,7 +62,7 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
   - Nem o Firebase, nem a Vercel, nem quem tiver acesso à consola consegue ler os valores.
 - **Bloqueio automático** após 15 minutos sem atividade. Ao recarregar a página, o cofre também volta a bloquear (a chave só vive em memória).
 - **Valores revelados** escondem-se sozinhos após 30 segundos.
-- **Auditoria**: revelar, copiar, exportar, importar, criar, alterar e apagar secrets, dar e retirar acesso, rodar a chave, gerir utilizadores e logins. Só Admins leem, e ninguém pode editar nem apagar registos.
+- **Auditoria**: revelar, copiar, exportar, importar, criar, alterar e apagar secrets, dar e retirar acesso, rodar a chave, gerir utilizadores e logins ficam registados na coleção `audit`. Ninguém pode editar nem apagar registos. Para já não há página na app para os consultar; consultam-se na consola do Firebase.
 - **Rotação**: em Utilizadores, "Rodar chave" gera uma chave nova, volta a cifrar todos os secrets e renova os acessos numa única escrita atómica. Faz isto quando alguém que tinha acesso sai da equipa.
 - **Variáveis** (não secretas) ficam em texto simples e são visíveis para todos os papéis. Chaves, tokens e passwords são sempre secrets.
 
@@ -72,6 +72,7 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
   - Pode ser agrupado por estado, maturidade, conta do repositório ou área.
   - Os filtros (maturidade, prioridade, conta do repositório, stack, "as minhas") ficam no URL, por isso dá para partilhar o link.
 - **Gate de Produção**: uma app só passa para Produção com dono de negócio, AI Lead, dev, suporte N1, repositório (URL e conta) e ambiente de produção (alojamento, URL e BD) preenchidos.
+- **URLs da app por ambiente** (DEV, QA, PROD): preenchidos na ficha (Editar, secção Ambientes), aparecem em "URLs da app" na visão geral, como atalhos no topo da ficha e como links na tabela.
 - **Ficha da app** com os separadores Visão geral, Ambientes e cofre (DEV, QA e PROD), Pessoas, Links e governo, e Histórico.
 - **Variáveis e secrets por ambiente**:
   - Importar um `.env` colado: o parser sugere automaticamente o que é secret.

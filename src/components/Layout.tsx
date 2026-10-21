@@ -103,7 +103,6 @@ export function Layout() {
       <TopTab to="/tabela">Tabela</TopTab>
       {canEdit ? <TopTab to="/cofre">Cofre</TopTab> : null}
       {isAdmin ? <TopTab to="/utilizadores">Utilizadores</TopTab> : null}
-      {isAdmin ? <TopTab to="/auditoria">Auditoria</TopTab> : null}
     </>
   )
 

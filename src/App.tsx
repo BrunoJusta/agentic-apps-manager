@@ -11,7 +11,6 @@ import { AppDetailPage } from './pages/AppDetail'
 import { AppFormPage } from './pages/AppForm'
 import { VaultPage } from './pages/VaultPage'
 import { UsersPage } from './pages/UsersPage'
-import { AuditPage } from './pages/AuditPage'
 import type { ReactNode } from 'react'
 
 function AdminOnly({ children }: { children: ReactNode }) {
@@ -30,7 +29,6 @@ const router = createBrowserRouter([
       { path: '/apps/:id/editar', element: <AppFormPage /> },
       { path: '/cofre', element: <VaultPage /> },
       { path: '/utilizadores', element: <AdminOnly><UsersPage /></AdminOnly> },
-      { path: '/auditoria', element: <AdminOnly><AuditPage /></AdminOnly> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

@@ -139,11 +139,17 @@ export function TablePage() {
                     <td className="max-w-44 truncate px-3.5 py-[11px] text-ink-muted">{a.businessOwner.name || <span className="text-ink-tertiary">Por definir</span>}</td>
                     <td className="px-3.5 py-[11px]">
                       <span className="flex gap-1">
-                        {ENVS.filter((e) => a.environments[e.key].enabled).map((e) => (
-                          <span key={e.key} className="font-mono text-[11px] text-ink-muted">
-                            {e.short}
-                          </span>
-                        ))}
+                        {ENVS.filter((e) => a.environments[e.key].enabled).map((e) =>
+                          a.environments[e.key].appUrl ? (
+                            <a key={e.key} href={a.environments[e.key].appUrl} target="_blank" rel="noreferrer" title={`Abrir ${e.label}: ${a.environments[e.key].appUrl}`} className="font-mono text-[11px] text-ink underline decoration-hairline-strong underline-offset-2 hover:decoration-ink">
+                              {e.short}
+                            </a>
+                          ) : (
+                            <span key={e.key} className="font-mono text-[11px] text-ink-tertiary" title={`${e.label}: sem URL`}>
+                              {e.short}
+                            </span>
+                          ),
+                        )}
                       </span>
                     </td>
                     <td className="px-3.5 py-[11px] whitespace-nowrap text-ink-muted">{a.repo.account ? repoAccountLabel(a.repo.account) : <span className="text-ink-tertiary">Por definir</span>}</td>
