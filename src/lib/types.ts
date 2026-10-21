@@ -32,9 +32,7 @@ export interface Environment {
   dbType: string
   dbProject: string
   dbId: string
-  dbUrl: string
   hosting: string
-  hostingUrl: string
   appUrl: string
   notes: string
   variables: Variable[]

@@ -531,8 +531,8 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
     <div className="flex flex-col gap-5">
       <Panel className="grid grid-cols-1 gap-x-8 px-5 py-2 md:grid-cols-2">
         <InfoItem icon={<Globe size={16} />} label="URL da app" value={e.appUrl} href={e.appUrl || undefined} />
-        <InfoItem icon={<HardDrives size={16} />} label="Alojamento" value={e.hosting} href={e.hostingUrl || undefined} />
-        <InfoItem icon={<Database size={16} />} label="Base de dados" value={[e.dbType, e.dbProject].filter(Boolean).join(', ')} href={e.dbUrl || undefined} />
+        <InfoItem icon={<HardDrives size={16} />} label="Alojamento" value={e.hosting} />
+        <InfoItem icon={<Database size={16} />} label="Base de dados" value={[e.dbType, e.dbProject].filter(Boolean).join(', ')} />
         <InfoItem icon={<Database size={16} />} label="ID da base de dados" value={e.dbId} mono />
         {e.notes ? <p className="border-t border-hairline py-3 text-[13px] whitespace-pre-line text-ink-muted md:col-span-2">{e.notes}</p> : null}
       </Panel>

@@ -384,14 +384,8 @@ export function AppFormPage() {
                       <Field label="ID da base de dados" htmlFor={`f-${env.key}-dbid`}>
                         <Input id={`f-${env.key}-dbid`} value={e.dbId} onChange={(ev) => upEnv(env.key, { dbId: ev.target.value })} className="font-mono text-[13px]" spellCheck={false} autoComplete="off" />
                       </Field>
-                      <Field label="URL da consola da BD" htmlFor={`f-${env.key}-dburl`}>
-                        <Input id={`f-${env.key}-dburl`} type="url" value={e.dbUrl} onChange={(ev) => upEnv(env.key, { dbUrl: ev.target.value })} placeholder="https://" spellCheck={false} />
-                      </Field>
                       <Field label="Alojamento" htmlFor={`f-${env.key}-host`}>
                         <Input id={`f-${env.key}-host`} list="hostings" value={e.hosting} onChange={(ev) => upEnv(env.key, { hosting: ev.target.value })} autoComplete="off" />
-                      </Field>
-                      <Field label="URL do painel de alojamento" htmlFor={`f-${env.key}-hosturl`}>
-                        <Input id={`f-${env.key}-hosturl`} type="url" value={e.hostingUrl} onChange={(ev) => upEnv(env.key, { hostingUrl: ev.target.value })} placeholder="https://vercel.com/…" spellCheck={false} />
                       </Field>
                       <Field label={`URL da app em ${env.short}`} hint="O endereço onde a app corre neste ambiente." htmlFor={`f-${env.key}-appurl`} className="sm:col-span-2">
                         <Input id={`f-${env.key}-appurl`} type="url" value={e.appUrl} onChange={(ev) => upEnv(env.key, { appUrl: ev.target.value })} placeholder="https://" spellCheck={false} />

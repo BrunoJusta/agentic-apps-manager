@@ -27,7 +27,8 @@ export function normalizeApp(id: string, raw: Record<string, unknown>): AgenticA
   const r = rest as Partial<AgenticApp>
   const envs = {} as AgenticApp['environments']
   for (const k of ENV_KEYS) {
-    const e = (r.environments?.[k] ?? {}) as Partial<AgenticApp['environments'][EnvKey]>
+    // dbUrl e hostingUrl deixaram de existir: são removidos ao gravar.
+    const { dbUrl: _du, hostingUrl: _hu, ...e } = (r.environments?.[k] ?? {}) as Partial<AgenticApp['environments'][EnvKey]> & { dbUrl?: unknown; hostingUrl?: unknown }
     envs[k] = {
       ...emptyEnvironment(base.environments[k].enabled),
       ...e,
