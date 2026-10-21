@@ -1,0 +1,185 @@
+rules_version = '2';
+
+// Regras da base de dados agentic-apps-prod (projeto sogrape-ai-studio).
+// Publicar com: firebase deploy --only firestore:rules  (ver firebase.json)
+//
+// Princípios:
+//  - Só contas @sogrape.pt que estejam na coleção users, ativas, entram.
+//  - Viewers leem apps; Editors e Admins escrevem; só Admins gerem utilizadores e o cofre.
+//  - Secrets só têm texto cifrado (iv + ct). As regras recusam qualquer campo "value".
+//  - Auditoria e histórico são só de acrescentar: ninguém edita nem apaga.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- identidade ----------
+    function signedIn() {
+      return request.auth != null && request.auth.token.email is string;
+    }
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+    function isSogrape() {
+      return signedIn() && myEmail().matches('^[^@]+@sogrape[.]pt$');
+    }
+    // Admin de arranque: entra mesmo antes de existir o seu documento em users.
+    // Se mudares este email, muda também VITE_BOOTSTRAP_ADMIN.
+    function bootstrapEmail() {
+      return 'bruno.justa@sogrape.pt';
+    }
+    function isBootstrap() {
+      return isSogrape() && myEmail() == bootstrapEmail();
+    }
+    function userPath(e) {
+      return /databases/$(database)/documents/users/$(e);
+    }
+    function hasProfile() {
+      return exists(userPath(myEmail()));
+    }
+    function me() {
+      return get(userPath(myEmail())).data;
+    }
+    function isActive() {
+      return isSogrape() && hasProfile() && me().active == true;
+    }
+    function isAdmin() {
+      return isBootstrap() || (isActive() && me().role == 'admin');
+    }
+    function isEditor() {
+      return isAdmin() || (isActive() && me().role == 'editor');
+    }
+    function isReader() {
+      return isBootstrap() || isActive();
+    }
+
+    function validRole(r) {
+      return r in ['admin', 'editor', 'viewer'];
+    }
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // ---------- utilizadores ----------
+    match /users/{email} {
+      allow read: if isSogrape() && (email == myEmail() || isAdmin());
+
+      allow create: if
+        // o Admin de arranque cria o seu próprio documento
+        (isBootstrap() && email == myEmail()
+          && request.resource.data.role == 'admin' && request.resource.data.active == true
+          && request.resource.data.email == email)
+        ||
+        // um Admin dá acesso a outra pessoa @sogrape.pt
+        (isAdmin() && email.matches('^[^@]+@sogrape[.]pt$') && email == email.lower()
+          && request.resource.data.email == email
+          && validRole(request.resource.data.role)
+          && request.resource.data.active is bool);
+
+      allow update: if
+        // Admin muda papel/estado (o Admin de arranque nunca pode ser despromovido nem desativado)
+        (isAdmin()
+          && onlyChanges(['displayName', 'role', 'active', 'lastLoginAt'])
+          && validRole(request.resource.data.role)
+          && (email != bootstrapEmail() || (request.resource.data.role == 'admin' && request.resource.data.active == true)))
+        ||
+        // o próprio só atualiza nome e último login
+        (isSogrape() && email == myEmail() && hasProfile() && onlyChanges(['displayName', 'lastLoginAt']));
+
+      allow delete: if false;
+    }
+
+    // ---------- chaves pessoais (só a pública e a privada cifrada) ----------
+    match /userKeys/{email} {
+      allow read: if (isEditor() && email == myEmail()) || isAdmin();
+      allow create, update: if isEditor() && email == myEmail()
+        && request.resource.data.email == email
+        && request.resource.data.publicKey is string
+        && request.resource.data.fingerprint is string
+        && request.resource.data.encPrivateKey.ct is string
+        && request.resource.data.encPrivateKey.iv is string
+        && request.resource.data.encPrivateKey.salt is string
+        && request.resource.data.encPrivateKey.iterations >= 100000;
+      allow delete: if (isSogrape() && email == myEmail()) || isAdmin();
+    }
+
+    // ---------- cofre ----------
+    match /vault/{docId} {
+      allow read: if isEditor();
+      allow create: if isAdmin() && docId == 'meta'
+        && request.resource.data.version == 1
+        && request.resource.data.check.ct is string;
+      allow update: if isAdmin() && docId == 'meta'
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.check.ct is string;
+      allow delete: if false;
+    }
+
+    match /vaultGrants/{email} {
+      allow read: if (isEditor() && email == myEmail()) || isAdmin();
+      // só se dá acesso a Editors/Admins ativos
+      allow create, update: if isAdmin()
+        && request.resource.data.email == email
+        && request.resource.data.wrappedKey is string
+        && request.resource.data.version is int
+        && exists(userPath(email))
+        && get(userPath(email)).data.active == true
+        && get(userPath(email)).data.role in ['editor', 'admin'];
+      allow delete: if isAdmin() || (isSogrape() && email == myEmail());
+    }
+
+    // ---------- apps ----------
+    match /apps/{appId} {
+      allow read: if isReader();
+      allow create: if isEditor()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 200;
+      allow update: if isEditor()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0;
+      allow delete: if isAdmin();
+
+      match /secrets/{secretId} {
+        allow read: if isEditor();
+        allow create, update: if isEditor()
+          && request.resource.data.appId == appId
+          && request.resource.data.env in ['dev', 'qa', 'prod']
+          && request.resource.data.name is string
+          && request.resource.data.iv is string
+          && request.resource.data.ct is string
+          && request.resource.data.version is int
+          && request.resource.data.keys().hasOnly([
+            'appId', 'env', 'name', 'type', 'note', 'rotateBy', 'iv', 'ct', 'version',
+            'createdAt', 'createdBy', 'updatedAt', 'updatedBy'
+          ]);
+        allow delete: if isEditor();
+      }
+
+      match /history/{entryId} {
+        allow read: if isReader();
+        allow create: if isEditor() && request.resource.data.by == myEmail();
+        allow update: if false;
+        allow delete: if isAdmin(); // só ao apagar a app inteira
+      }
+    }
+
+    // Leitura em collection group (índice de secrets no cofre e rotação de chave).
+    match /{path=**}/secrets/{secretId} {
+      allow read: if isEditor();
+    }
+
+    // ---------- auditoria ----------
+    match /audit/{entryId} {
+      allow read: if isAdmin();
+      allow create: if isReader()
+        && request.resource.data.by == myEmail()
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+
+    // tudo o resto: fechado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

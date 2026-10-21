@@ -1,0 +1,497 @@
+@import "tailwindcss";
+@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/*
+  Linguagem do backoffice (inspirada no DESIGN.md da Vercel): tinta e cinzas, linhas finas,
+  sombras empilhadas. A única cor viva é a de cada entidade (fase, área), recebida por --c.
+  Raios: 6 (checkbox, kbd), 8 (inputs, itens de menu), 12 (fieldsets, caixas internas),
+  14 (cartões, tabelas), 16 (modais), 999 (tudo o que se clica).
+*/
+:root {
+  color-scheme: light;
+  --f-display: "Outfit Variable", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --f-ui: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --canvas: #fafafa;
+  --surface-1: #ffffff;
+  --surface-2: #f5f5f5;
+  --surface-3: #ebebeb;
+  --hairline: #ebebeb;
+  --hairline-strong: #d4d4d4;
+  --ink: #171717;
+  --ink-muted: #4d4d4d;
+  --ink-subtle: #6f6f6f;
+  --ink-tertiary: #8f8f8f;
+  --accent: #171717;
+  --accent-hover: #383838;
+  --on-accent: #ffffff;
+  --accent-tint: rgba(23, 23, 23, 0.06);
+  --sel: rgba(23, 23, 23, 0.04);
+  --scrim: rgba(23, 23, 23, 0.28);
+  --success: #1a7f37;
+  --success-tint: rgba(26, 127, 55, 0.09);
+  --danger: #d93036;
+  --danger-tint: rgba(217, 48, 54, 0.08);
+  --warn: #ab570a;
+  --warn-tint: #fff4de;
+
+  --ring: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --e2: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 1px 1px rgba(0, 0, 0, 0.02), 0 2px 2px rgba(0, 0, 0, 0.04);
+  --e4: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 2px rgba(0, 0, 0, 0.04), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+  --shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.02), 0 8px 16px -4px rgba(0, 0, 0, 0.06), 0 24px 32px -8px rgba(0, 0, 0, 0.08);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --gutter: 24px;
+}
+@media (max-width: 639px) {
+  :root {
+    --gutter: 16px;
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-ink-tertiary: var(--ink-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--ink);
+  --color-accent-soft: var(--accent-tint);
+  --color-on-accent: var(--on-accent);
+  --color-sel: var(--sel);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-tint);
+  --color-warning: var(--warn);
+  --color-warning-soft: var(--warn-tint);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-tint);
+  --shadow-ring: var(--ring);
+  --shadow-e2: var(--e2);
+  --shadow-e4: var(--e4);
+  --shadow-panel: var(--shadow);
+  --radius-card: 14px;
+  --radius-modal: 16px;
+  --font-sans: var(--f-ui);
+  --font-display: var(--f-display);
+  --font-mono: var(--f-mono);
+  --ease-out: var(--ease-out);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font: 14px/1.5 var(--f-ui);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  button,
+  label,
+  legend {
+    font-family: var(--f-display);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgba(23, 23, 23, 0.12);
+  }
+
+  dialog::backdrop {
+    background: var(--scrim);
+  }
+
+  dialog {
+    color: var(--ink);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: var(--ink);
+  }
+
+  code,
+  kbd,
+  .mono {
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+/* ---------- Componentes base ---------- */
+
+/* Cartão: sem borda, anel + sombras empilhadas; topo tingido pela cor da entidade. */
+.card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  border-radius: 14px;
+  box-shadow: var(--e2);
+  overflow: hidden;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s var(--ease-out);
+}
+a.card:hover,
+.card.interactive:hover {
+  box-shadow: var(--e4);
+  transform: translateY(-2px);
+}
+.card .cbody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 18px 16px;
+}
+.card .cbody::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 96px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c, transparent) 7%, transparent), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+.card .cfoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--hairline);
+  padding: 12px 14px;
+}
+.card h3 {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+/* Etiquetas. */
+.tg {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  font-family: var(--f-display);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.tg.ar {
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  color: color-mix(in srgb, var(--c) 78%, var(--ink));
+  font-weight: 600;
+}
+.tg.ar::before,
+.dot {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c);
+}
+.tg.star {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+.tg.no {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.tg.ok {
+  background: var(--success-tint);
+  color: var(--success);
+}
+.tg.new {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+  outline: 1px dashed transparent;
+}
+.tg.mn {
+  font-family: var(--f-mono);
+  font-weight: 400;
+  font-size: 11.5px;
+}
+
+/* Pill de estado. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-family: var(--f-display);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pill.st-ok {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+.pill.st-no {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.pill.st-warn {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+.pill.st-run {
+  background: var(--surface-2);
+  color: var(--ink-muted);
+}
+
+/* Segmentado. */
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-1);
+  box-shadow: var(--ring);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-subtle);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.seg button:hover {
+  color: var(--ink);
+}
+.seg button[aria-pressed="true"],
+.seg button[aria-checked="true"] {
+  background: var(--ink);
+  color: var(--canvas);
+}
+.seg .sc {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--ink-subtle);
+  font-family: var(--f-mono);
+  font-size: 11px;
+}
+.seg button[aria-pressed="true"] .sc,
+.seg button[aria-checked="true"] .sc {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--canvas);
+}
+
+/* Caixas de informação. */
+.notice {
+  border-left: 2px solid var(--ink);
+  padding: 2px 0 2px 12px;
+  color: var(--ink-muted);
+}
+.notice.warn {
+  border-color: var(--warn);
+}
+.notice.danger {
+  border-color: var(--danger);
+}
+.srcf {
+  background: var(--surface-2);
+  border-radius: 12px;
+}
+
+/* ---------- Movimento (tudo dentro de no-preference) ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .enter {
+    animation: enter 0.24s var(--ease-out);
+  }
+  dialog[open] {
+    animation: enter 0.22s var(--ease-out);
+  }
+  .stagger {
+    animation: enter 0.4s var(--ease-out) both;
+    animation-delay: calc(min(var(--i, 0), 14) * 26ms);
+  }
+  .drawer-in {
+    animation: slide 0.26s var(--ease-out);
+  }
+  .skeleton {
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .unlock-ring {
+    animation: unlock-ring 0.9s var(--ease-out) both;
+  }
+  .unlock-pop {
+    animation: unlock-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .countdown {
+    animation: countdown linear both;
+    transform-origin: left;
+  }
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes slide {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes unlock-ring {
+  from {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+@keyframes unlock-pop {
+  from {
+    transform: scale(0.7);
+  }
+}
+@keyframes countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+}
+
+/* Brilho que segue o cursor, na cor da entidade. --mx/--my escritos em pointermove. */
+.spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--c, var(--ink)) 6%, transparent), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: -1;
+}
+.spotlight:hover::after {
+  opacity: 1;
+}
+
+/* Cartão a ser arrastado e coluna de destino. */
+.drag-lift {
+  transform: rotate(-1.5deg) scale(1.02);
+  box-shadow: var(--shadow);
+}
+.drop-glow {
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1px rgba(23, 23, 23, 0.18);
+}
+
+/* View Transitions: o cartão desliza para a coluna nova. */
+::view-transition-group(*) {
+  animation-duration: 0.4s;
+  animation-timing-function: var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+.scroll-x {
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+/* Contador mono em pill (tabs, cabeçalhos de secção). */
+.count {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--ink-subtle);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+}
+
+}
