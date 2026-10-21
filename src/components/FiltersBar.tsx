@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { CaretDown, Check, Funnel, GithubLogo, Gauge, MagnifyingGlass, Stack, User, Warning, X } from '@phosphor-icons/react'
+import { CaretDown, Check, Funnel, GithubLogo, Gauge, MagnifyingGlass, SquaresFour, Stack, User, Warning, X } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { allTags } from '../lib/app-utils'
-import { Dot, Segmented } from './ui'
+import { Dot } from './ui'
 import { MATURITIES, PRIORITIES, REPO_ACCOUNTS } from '../lib/constants'
 import { useFilters, type GroupBy } from '../lib/filters'
 
@@ -86,7 +86,7 @@ export function FilterChip({
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative shrink-0">
       <div
         className={clsx(
           'flex h-[34px] items-center rounded-full font-display text-[13px] font-medium transition-[background-color,color,box-shadow] duration-150',
@@ -172,29 +172,32 @@ function MenuItem({ checked, onClick, children, color }: { checked: boolean; onC
 export function GroupByChip() {
   const { filters: f, set } = useFilters()
   return (
-    <Segmented<GroupBy>
+    <FilterChip
+      icon={<SquaresFour size={14} />}
       label="Agrupar por"
       value={f.group}
-      onChange={(v) => set({ group: v })}
+      clearable={false}
+      align="right"
       options={[
         { value: 'status', label: 'Estado' },
         { value: 'maturity', label: 'Maturidade' },
         { value: 'account', label: 'Repositório' },
         { value: 'area', label: 'Área' },
       ]}
+      onChange={(v) => set({ group: v as GroupBy })}
     />
   )
 }
 
-export function FiltersBar() {
+export function FiltersBar({ trailing }: { trailing?: ReactNode }) {
   const { filters: f, set, active, clear } = useFilters()
   const { apps } = useApps()
   const tags = useMemo(() => [...new Set(apps.flatMap(allTags))].sort((a, b) => a.localeCompare(b, 'pt')), [apps])
   const count = [f.maturity, f.priority, f.account, f.tag, f.mine ? '1' : ''].filter(Boolean).length
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="relative w-full sm:w-48 xl:w-60">
+    <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
+      <div className="relative w-full sm:w-44 xl:w-auto xl:max-w-60 xl:min-w-32 xl:flex-1">
         <MagnifyingGlass size={14} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-tertiary" aria-hidden />
         <input
           type="search"
@@ -226,7 +229,7 @@ export function FiltersBar() {
         aria-pressed={f.mine}
         onClick={() => set({ mine: !f.mine })}
         className={clsx(
-          'flex h-[34px] items-center gap-1.5 rounded-full px-3 font-display text-[13px] font-medium transition-[background-color,color] duration-150 active:scale-[0.97]',
+          'flex h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3 font-display text-[13px] font-medium whitespace-nowrap transition-[background-color,color] duration-150 active:scale-[0.97]',
           f.mine ? 'bg-ink text-canvas' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
         )}
       >
@@ -235,12 +238,13 @@ export function FiltersBar() {
       </button>
 
       {active ? (
-        <button type="button" onClick={clear} className="flex h-[30px] items-center gap-1 rounded-full px-2.5 font-display text-[12.5px] font-medium text-ink-subtle transition-colors hover:bg-sel hover:text-ink">
+        <button type="button" onClick={clear} className="flex h-[30px] shrink-0 items-center gap-1 rounded-full px-2.5 font-display text-[12.5px] font-medium whitespace-nowrap text-ink-subtle transition-colors hover:bg-sel hover:text-ink">
           <Funnel size={13} aria-hidden />
           Limpar{count ? ` (${count})` : ''}
         </button>
       ) : null}
 
+      {trailing ? <div className="ml-auto shrink-0">{trailing}</div> : null}
     </div>
   )
 }

@@ -202,8 +202,6 @@ export function BoardPage() {
       description={loading ? undefined : `${apps.length} ${apps.length === 1 ? 'app' : 'apps'} no total${filtering ? `, ${visible.length} com os filtros atuais` : ''}.`}
       actions={
         <>
-          <GroupByChip />
-          <span aria-hidden className="mx-1 hidden h-5 w-px bg-hairline-strong sm:block" />
           {canEdit ? (
             <Button variant="secondary" onClick={() => setImportOpen(true)} className="hidden sm:inline-flex">
               <UploadSimple size={14} aria-hidden />
@@ -223,7 +221,7 @@ export function BoardPage() {
         </>
       }
     >
-      <FiltersBar />
+      <FiltersBar trailing={<GroupByChip />} />
     </PageHeader>
   )
 

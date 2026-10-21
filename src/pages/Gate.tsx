@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Kanban, LockKey, ShieldCheck, SignOut, WindowsLogo } from '@phosphor-icons/react'
+import { Kanban, LockKey, SignOut, WindowsLogo } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { BrandMark } from '../components/Layout'
 import { BOOTSTRAP_ADMIN } from '../lib/constants'
@@ -57,10 +57,6 @@ export function LoginScreen() {
           <li className="flex gap-2.5">
             <LockKey size={16} className="mt-0.5 shrink-0 text-ink" aria-hidden />
             <span>Secrets cifrados no teu browser. Nem o servidor nem a consola Firebase os conseguem ler.</span>
-          </li>
-          <li className="flex gap-2.5">
-            <ShieldCheck size={16} className="mt-0.5 shrink-0 text-ink" aria-hidden />
-            <span>Cada revelação, cópia ou exportação fica registada na auditoria.</span>
           </li>
         </ul>
       </div>

@@ -180,7 +180,7 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
       return shell(
         <UnlockBurst />,
         'Cofre aberto',
-        `Podes revelar, copiar e exportar secrets. Cada ação fica na auditoria. Bloqueia sozinho após ${AUTO_LOCK_MINUTES} minutos sem atividade.`,
+        `Podes revelar, copiar e exportar secrets. Bloqueia sozinho após ${AUTO_LOCK_MINUTES} minutos sem atividade.`,
         <Button onClick={vault.lock}>
           <LockKey size={16} aria-hidden />
           Bloquear agora
