@@ -3,7 +3,8 @@ import { AppIcon } from '../components/AppCard'
 import { fileToSquareIcon } from '../lib/image'
 import { Link, useBlocker, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { ArrowLeft, ImageSquare, Plus, X } from '@phosphor-icons/react'
+import { ArrowLeft, Cloud, Flag, GitBranch, IdentificationCard, ImageSquare, LinkSimple, Plus, ShieldCheck, Stack as StackIcon, X } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -26,14 +27,14 @@ import { createApp, updateApp } from '../data/store'
 import type { AppInput, EnvKey, Environment, RepoAccount, StatusKey } from '../lib/types'
 import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, PersonInput, Segmented, Select, Skeleton, TagInput, Textarea } from '../components/ui'
 
-const SECTIONS = [
-  { id: 'identidade', label: 'Identidade' },
-  { id: 'estado', label: 'Estado' },
-  { id: 'stack', label: 'Stack' },
-  { id: 'ambientes', label: 'Ambientes' },
-  { id: 'repositorio', label: 'Repositório' },
-  { id: 'links', label: 'Links' },
-  { id: 'governo', label: 'Governance' },
+const SECTIONS: { id: string; label: string; icon: Icon }[] = [
+  { id: 'identidade', label: 'Identidade', icon: IdentificationCard },
+  { id: 'estado', label: 'Estado', icon: Flag },
+  { id: 'stack', label: 'Stack', icon: StackIcon },
+  { id: 'ambientes', label: 'Ambientes', icon: Cloud },
+  { id: 'repositorio', label: 'Repositório', icon: GitBranch },
+  { id: 'links', label: 'Links', icon: LinkSimple },
+  { id: 'governo', label: 'Governance', icon: ShieldCheck },
 ]
 
 function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: ReactNode }) {
@@ -249,10 +250,11 @@ export function AppFormPage() {
               href={`#${s.id}`}
               aria-current={activeSection === s.id ? 'true' : undefined}
               className={clsx(
-                'flex h-9 items-center rounded-lg px-3 font-display text-[13.5px] font-medium transition-[background-color,color,box-shadow] duration-150',
+                'flex h-9 items-center gap-2.5 rounded-lg px-3 font-display text-[13.5px] font-medium transition-[background-color,color,box-shadow] duration-150',
                 activeSection === s.id ? 'bg-surface-1 text-ink shadow-e2' : 'text-ink-subtle hover:bg-sel hover:text-ink',
               )}
             >
+              <s.icon size={16} weight={activeSection === s.id ? 'fill' : 'regular'} aria-hidden className="shrink-0" />
               {s.label}
             </a>
           ))}
