@@ -106,7 +106,7 @@ export function Layout() {
         Lifecycle
       </TopTab>
       <TopTab to="/production-portfolio" icon={<Briefcase size={15} />}>
-        Production Portfolio
+        Portfolio
       </TopTab>
       {canEdit ? (
         <TopTab to="/credentials-vault" icon={<LockKey size={15} />}>

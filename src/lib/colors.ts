@@ -6,7 +6,14 @@ import type { RequestStatus, StatusKey } from './types'
  * com um âmbar e um coral para dar contraste. O texto das etiquetas mistura a cor com ardósia profunda,
  * o que garante contraste AA (4,5:1 ou mais) em todas.
  */
-export const ENTITY_PALETTE = ['#39C2EF', '#6C7CF0', '#2DB9A5', '#A27BF0', '#E9A23B', '#62B85A', '#F07A7A', '#E06FB6'] as const
+export const ENTITY_PALETTE = ['#6C7CF0', '#2DB9A5', '#A27BF0', '#E9A23B', '#62B85A', '#F07A7A', '#E06FB6'] as const
+
+/** Áreas com cor fixa. O azul-céu fica reservado para Digital & Data, por isso não entra na paleta acima. */
+const AREA_COLORS: Record<string, string> = {
+  'digital & data': '#39C2EF',
+  'digital and data': '#39C2EF',
+  'digital e data': '#39C2EF',
+}
 
 /** Cor de cada fase: de ardósia neutra (Idea) a azul (em curso), âmbar (testes) e verde (Production). */
 export const STATUS_COLORS: Record<StatusKey, string> = {
@@ -31,6 +38,8 @@ export const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
 export function areaColor(area: string): string | undefined {
   const a = area.trim().toLowerCase()
   if (!a) return undefined
+  const fixed = AREA_COLORS[a.replace(/\s+/g, ' ')]
+  if (fixed) return fixed
   let h = 0
   for (let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0
   return ENTITY_PALETTE[h % ENTITY_PALETTE.length]
