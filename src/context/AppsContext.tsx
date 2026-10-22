@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
 import { subscribeApps, subscribeRequestsIndex } from '../data/store'
+import { registerAreas } from '../lib/colors'
 import type { AgenticApp, AppRequest } from '../lib/types'
 
 interface AppsState {
@@ -40,6 +41,12 @@ export function AppsProvider({ children }: { children: ReactNode }) {
     if (status !== 'ready') return
     return subscribeRequestsIndex(setRequests, () => setRequests([]))
   }, [status])
+
+  // Cada área tem uma cor só sua: regista as áreas pela ordem em que foram criadas antes de pintar.
+  useMemo(() => {
+    const ordered = [...apps].sort((x, y) => (x.createdAt?.toMillis?.() ?? 0) - (y.createdAt?.toMillis?.() ?? 0) || x.name.localeCompare(y.name, 'pt'))
+    registerAreas(ordered.map((x) => x.area))
+  }, [apps])
 
   const value = useMemo<AppsState>(
     () => ({ apps, loading, error, byId: (id) => apps.find((a) => a.id === id), requests }),
