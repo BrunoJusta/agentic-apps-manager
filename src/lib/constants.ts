@@ -37,8 +37,8 @@ export const MATURITIES: { key: MaturityKey; label: string }[] = [
   { key: 'poc', label: 'PoC' },
   { key: 'piloto', label: 'Piloto' },
   { key: 'mvp', label: 'MVP' },
-  { key: 'estavel', label: 'Estável' },
-  { key: 'escala', label: 'Escala' },
+  { key: 'estavel', label: 'GA' },
+  { key: 'escala', label: 'Scale' },
 ]
 
 export const PRIORITIES: { key: PriorityKey; label: string; rank: number }[] = [
