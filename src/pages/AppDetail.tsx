@@ -11,7 +11,6 @@ import {
   ArrowSquareOut,
   Buildings,
   CalendarBlank,
-  Coins,
   Flag,
   GithubLogo,
   Globe,
@@ -35,7 +34,7 @@ import { useVault } from '../context/VaultContext'
 import { linkedItems } from '../lib/vault-utils'
 import { productionReadiness } from '../lib/app-utils'
 import { ENVS, isFinished, maturityLabel, PERSONAL_DATA, priorityLabel, repoAccountLabel, STATUSES, statusLabel } from '../lib/constants'
-import { fmtDate, fmtEur, fmtRelative } from '../lib/format'
+import { fmtDate, fmtRelative } from '../lib/format'
 import { deleteApp, moveApp } from '../data/store'
 import type { AgenticApp, EnvKey, Person, StatusKey } from '../lib/types'
 import { Avatar, Badge, Button, ConfirmDialog, EmptyState, IconButton, Panel, Segmented, Skeleton } from '../components/ui'
@@ -198,7 +197,6 @@ function Overview({ app }: { app: AgenticApp }) {
           <Fact icon={RocketLaunch} label="Go-live">{fmtDate(app.goLiveDate)}</Fact>
           <Fact icon={UserCircle} label="Owner">{app.owner.name}</Fact>
           <Fact icon={GithubLogo} label="Repositório">{app.repo.account ? repoAccountLabel(app.repo.account) : ''}</Fact>
-          <Fact icon={Coins} label="Custo mensal">{fmtEur(app.governance.monthlyCost)}</Fact>
         </dl>
         {app.repo.url ? (
           <a href={app.repo.url} target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-2 rounded-full bg-surface-1 px-3.5 py-2 font-display text-[13px] font-medium text-ink shadow-ring transition-colors hover:bg-surface-2">
@@ -248,7 +246,6 @@ function Governance({ app }: { app: AgenticApp }) {
             <Badge tone={app.governance.personalData === 'sim' ? 'warning' : app.governance.personalData === 'nao' ? 'success' : 'neutral'}>{pd?.label}</Badge>
           </Fact>
           <Fact icon={Tag} label="Classificação">{app.governance.dataClassification}</Fact>
-          <Fact icon={Coins} label="Custo mensal">{fmtEur(app.governance.monthlyCost)}</Fact>
         </dl>
         {app.governance.risks ? (
           <>

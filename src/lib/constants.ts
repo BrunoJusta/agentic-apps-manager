@@ -126,7 +126,7 @@ export function emptyApp(): AppInput {
     environments: { dev: emptyEnvironment(true), qa: emptyEnvironment(), prod: emptyEnvironment() },
     repo: { url: '', account: '', owner: '', branch: 'main' },
     links: [],
-    governance: { personalData: 'por_avaliar', dataClassification: '', monthlyCost: null, risks: '', notes: '' },
+    governance: { personalData: 'por_avaliar', dataClassification: '', risks: '', notes: '' },
   }
 }
 

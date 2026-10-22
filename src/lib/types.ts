@@ -81,7 +81,8 @@ export interface AgenticApp {
   governance: {
     personalData: PersonalData
     dataClassification: string
-    monthlyCost: number | null
+    /** Antigo: já não se edita nem se mostra. */
+    monthlyCost?: number | null
     risks: string
     notes: string
   }

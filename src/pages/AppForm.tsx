@@ -456,17 +456,6 @@ export function AppFormPage() {
                   options={[...new Set([...DATA_CLASSIFICATIONS, ...(form.governance.dataClassification ? [form.governance.dataClassification] : [])])].map((c) => ({ value: c, label: c }))}
                 />
               </Field>
-              <Field label="Custo mensal estimado (€)" htmlFor="f-cost">
-                <Input
-                  id="f-cost"
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  step="1"
-                  value={form.governance.monthlyCost ?? ''}
-                  onChange={(e) => up({ governance: { ...form.governance, monthlyCost: e.target.value === '' ? null : Math.max(0, Number(e.target.value)) } })}
-                />
-              </Field>
             </div>
             <Field label="Riscos" htmlFor="f-risks">
               <Textarea id="f-risks" value={form.governance.risks} onChange={(e) => up({ governance: { ...form.governance, risks: e.target.value } })} className="min-h-20" />
