@@ -9,7 +9,7 @@ import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { AUTH_OPTIONS, DATA_CLASSIFICATIONS, DB_TYPES, emptyApp, ENVS, HOSTINGS, LINK_SUGGESTIONS, MATURITIES, PRIORITIES, REPO_ACCOUNTS, STACK_SUGGESTIONS, STATUSES } from '../lib/constants'
-import { blurb, CARD_BLURB_MAX, productionReadiness, toInput } from '../lib/app-utils'
+import { CARD_BLURB_MAX, productionReadiness, toInput } from '../lib/app-utils'
 import { createApp, updateApp } from '../data/store'
 import type { AppInput, EnvKey, Environment, MaturityKey, PriorityKey, RepoAccount, StatusKey } from '../lib/types'
 import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, Segmented, Skeleton, Textarea } from '../components/ui'
@@ -122,32 +122,22 @@ function IconPicker({ value, name, area, onChange }: { value: string; name: stri
   )
 }
 
-/** Descrição com contador e pré-visualização ao vivo do texto que aparece no cartão do board. */
-function DescriptionField({ value, onChange, name }: { value: string; onChange: (v: string) => void; name: string }) {
+/** Descrição com contador: os primeiros caracteres aparecem no cartão do board. */
+function DescriptionField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const len = value.replace(/\s+/g, ' ').trim().length
-  const cut = len > CARD_BLURB_MAX
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-      <Field
-        label="Descrição"
-        htmlFor="f-desc"
-        hint={
-          <span className="tabular">
-            {len ? `${len} caracteres. ` : ''}
-            {cut ? `O cartão mostra os primeiros ${CARD_BLURB_MAX}.` : `Os primeiros ${CARD_BLURB_MAX} aparecem no cartão do board.`}
-          </span>
-        }
-      >
-        <Textarea id="f-desc" value={value} onChange={(e) => onChange(e.target.value)} placeholder="O que faz, para quem, e que problema resolve…" className="min-h-32" />
-      </Field>
-      <div aria-hidden className="hidden flex-col gap-1.5 lg:flex">
-        <span className="font-display text-[12.5px] font-medium text-ink-muted">No cartão</span>
-        <div className="rounded-[14px] bg-canvas p-4 shadow-ring">
-          <p className="truncate font-display text-[14px] font-semibold text-ink">{name || 'Nome da app'}</p>
-          <p className={clsx('mt-1 line-clamp-3 text-[13px] leading-snug', value ? 'text-ink-subtle' : 'text-ink-tertiary')}>{value ? blurb({ description: value }) : 'A descrição aparece aqui.'}</p>
-        </div>
-      </div>
-    </div>
+    <Field
+      label="Descrição"
+      htmlFor="f-desc"
+      hint={
+        <span className="tabular">
+          {len ? `${len} caracteres. ` : ''}
+          {len > CARD_BLURB_MAX ? `O cartão mostra os primeiros ${CARD_BLURB_MAX}.` : `Os primeiros ${CARD_BLURB_MAX} aparecem no cartão do board.`}
+        </span>
+      }
+    >
+      <Textarea id="f-desc" value={value} onChange={(e) => onChange(e.target.value)} placeholder="O que faz, para quem, e que problema resolve…" className="min-h-32" />
+    </Field>
   )
 }
 
@@ -464,7 +454,7 @@ export function AppFormPage() {
                 />
               </Field>
             </div>
-            <DescriptionField value={form.description} name={form.name} onChange={(description) => up({ description })} />
+            <DescriptionField value={form.description} onChange={(description) => up({ description })} />
           </Section>
 
           <Section id="estado" icon={Flag} title="Estado" description="Onde está a app, quão madura é e quando arrancou.">

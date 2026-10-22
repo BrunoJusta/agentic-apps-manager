@@ -57,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return subscribeUser(
       email,
       async (p) => {
+        // Depois do logout o Firestore ainda pode responder: ignoramos.
+        if (!auth.currentUser) return
         if (!p && email === BOOTSTRAP_ADMIN) {
           try {
             await bootstrapAdmin(email, name)
@@ -79,6 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       (e) => {
+        // Depois do logout as regras recusam a leitura: não é falta de acesso, é sessão terminada.
+        if (!auth.currentUser) return
         // Sem documento de utilizador, as regras recusam: tratamos como sem acesso.
         if (/permission/i.test(e.message)) setStatus('no-access')
         else {
@@ -103,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await fbSignOut(auth)
+    // Recarrega na raiz: mostra o login e limpa tudo o que estava em memória (incluindo a chave do Credentials Vault).
+    window.location.replace('/')
   }, [])
 
   const role = status === 'ready' ? (profile?.role ?? null) : null

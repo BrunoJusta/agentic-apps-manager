@@ -508,13 +508,15 @@ a.card:hover,
 }
 
 /* ---------- Fundo animado do login ---------- */
-/* Grelha de pontos que se dissolve nas margens e duas manchas suaves a derivar devagar. */
+/* Grelha de pontos que se dissolve nas margens e três manchas nas cores da Sogrape
+   (ferrugem, vinho e oliva) a derivar devagar. */
 .login-bg {
   position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  background: linear-gradient(160deg, color-mix(in srgb, #b15533 6%, var(--canvas)), var(--canvas) 45%, color-mix(in srgb, #7a2338 5%, var(--canvas)));
 }
 .login-bg::before {
   content: "";
@@ -530,17 +532,24 @@ a.card:hover,
   width: 46vmax;
   height: 46vmax;
   border-radius: 50%;
-  opacity: 0.7;
+  filter: blur(8px);
 }
 .login-blob.b1 {
   top: -14vmax;
   left: -10vmax;
-  background: radial-gradient(circle, rgba(177, 85, 51, 0.1), transparent 65%);
+  background: radial-gradient(circle, rgba(177, 85, 51, 0.32), transparent 62%);
 }
 .login-blob.b2 {
   bottom: -18vmax;
   right: -12vmax;
-  background: radial-gradient(circle, rgba(23, 23, 23, 0.06), transparent 65%);
+  background: radial-gradient(circle, rgba(122, 35, 56, 0.24), transparent 62%);
+}
+.login-blob.b3 {
+  top: 8vmax;
+  right: -16vmax;
+  width: 38vmax;
+  height: 38vmax;
+  background: radial-gradient(circle, rgba(111, 122, 58, 0.2), transparent 62%);
 }
 @media (prefers-reduced-motion: no-preference) {
   .login-bg::before {
@@ -552,6 +561,9 @@ a.card:hover,
   .login-blob.b2 {
     animation: login-drift-b 32s ease-in-out infinite alternate;
   }
+  .login-blob.b3 {
+    animation: login-drift-c 28s ease-in-out infinite alternate;
+  }
 }
 @keyframes login-grid {
   to {
@@ -561,6 +573,11 @@ a.card:hover,
 @keyframes login-drift-a {
   to {
     transform: translate(18vw, 14vh) scale(1.15);
+  }
+}
+@keyframes login-drift-c {
+  to {
+    transform: translate(-14vw, 16vh) scale(1.1);
   }
 }
 @keyframes login-drift-b {

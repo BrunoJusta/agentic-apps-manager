@@ -40,6 +40,7 @@ export function LoginScreen() {
       <div className="login-bg" aria-hidden>
         <span className="login-blob b1" />
         <span className="login-blob b2" />
+        <span className="login-blob b3" />
       </div>
       <div className="enter relative z-10 w-full max-w-[400px]">
         <div className="flex items-center gap-2.5">
@@ -60,7 +61,7 @@ export function LoginScreen() {
               setBusy(false)
             }}
           >
-            {busy ? null : <SograpeSymbol size={17} />}
+            {busy ? null : <SograpeSymbol size={22} />}
             Entrar com a conta Sogrape
           </Button>
           {error ? (
