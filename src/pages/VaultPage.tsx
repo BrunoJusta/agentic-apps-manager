@@ -74,7 +74,7 @@ export function VaultPage() {
     <>
       <PageHeader
         title="Credentials Vault"
-        description="Todas as variáveis e secrets das apps vivem aqui, cifrados no browser com AES-256-GCM. Cria-os aqui e liga-os às apps; nas fichas só aparece o nome."
+        description="Variáveis e secrets das apps, sempre cifrados. Cria-os aqui e liga-os às apps."
         actions={
           canEdit && vault.status !== 'unavailable' ? (
             <>
