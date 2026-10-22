@@ -24,6 +24,7 @@
   --hairline-strong: #d3d4de;
   --ink: #4c4f69;
   --ink-hover: #3c3f56;
+  --ink-deep: #262940;
   --ink-muted: #5c5f7a;
   --ink-subtle: #6e7189;
   --ink-tertiary: #9799ad;
@@ -237,8 +238,8 @@ a.card:hover,
   white-space: nowrap;
 }
 .tg.ar {
-  background: color-mix(in srgb, var(--c) 12%, transparent);
-  color: color-mix(in srgb, var(--c) 78%, var(--ink));
+  background: color-mix(in srgb, var(--c) 13%, transparent);
+  color: color-mix(in srgb, var(--c) 50%, var(--ink-deep));
   font-weight: 600;
 }
 .tg.ar::before,

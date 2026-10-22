@@ -45,7 +45,7 @@ export function AppIcon({ app, size = 36, className }: { app: Pick<AgenticApp, '
         borderRadius: radius,
         fontSize: Math.round(size * 0.36),
         background: c ? `color-mix(in srgb, ${c} 14%, var(--surface-1))` : 'var(--surface-2)',
-        color: c ? `color-mix(in srgb, ${c} 80%, var(--ink))` : 'var(--ink-muted)',
+        color: c ? `color-mix(in srgb, ${c} 50%, var(--ink-deep))` : 'var(--ink-muted)',
       }}
     >
       {initials}

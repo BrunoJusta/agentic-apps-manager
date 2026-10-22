@@ -1,26 +1,30 @@
 import type { CSSProperties } from 'react'
 import type { RequestStatus, StatusKey } from './types'
 
-/** Paleta terrosa da Sogrape. É a única cor viva da interface, e vem sempre dos dados. */
-export const ENTITY_PALETTE = ['#4F7A3A', '#7A2338', '#B15533', '#B07A12', '#2F6B73', '#9B4D6B', '#5E6B7A'] as const
+/**
+ * Paleta das áreas: tons frios e limpos, da mesma família do azul-céu #39C2EF e da ardósia #4C4F69,
+ * com um âmbar e um coral para dar contraste. O texto das etiquetas mistura a cor com ardósia profunda,
+ * o que garante contraste AA (4,5:1 ou mais) em todas.
+ */
+export const ENTITY_PALETTE = ['#39C2EF', '#6C7CF0', '#2DB9A5', '#A27BF0', '#E9A23B', '#62B85A', '#F07A7A', '#E06FB6'] as const
 
-/** Cor de cada fase (estado). */
+/** Cor de cada fase: de ardósia neutra (Idea) a azul (em curso), âmbar (testes) e verde (Production). */
 export const STATUS_COLORS: Record<StatusKey, string> = {
-  ideia: '#5E6B7A',
-  discovery: '#2F6B73',
-  desenvolvimento: '#B07A12',
-  qa: '#9B4D6B',
-  producao: '#4F7A3A',
-  descontinuada: '#7A2338',
+  ideia: '#8E91AB',
+  discovery: '#8B7CF6',
+  desenvolvimento: '#39C2EF',
+  qa: '#F2A93B',
+  producao: '#2FBF8F',
+  descontinuada: '#EF6F8A',
 }
 
 /** Cor de cada estado de um pedido. */
 export const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
-  novo: '#5E6B7A',
-  analise: '#B07A12',
-  curso: '#2F6B73',
-  concluido: '#4F7A3A',
-  rejeitado: '#7A2338',
+  novo: '#8E91AB',
+  analise: '#F2A93B',
+  curso: '#39C2EF',
+  concluido: '#2FBF8F',
+  rejeitado: '#EF6F8A',
 }
 
 /** Cor estável para uma área (cadeia de valor): o mesmo nome dá sempre a mesma cor. */

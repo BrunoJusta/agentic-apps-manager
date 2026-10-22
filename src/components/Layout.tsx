@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
-import { Briefcase, Cube, Kanban, LockKey, LockKeyOpen, MagnifyingGlass, SignOut, Users } from '@phosphor-icons/react'
+import { Briefcase, Kanban, LockKey, LockKeyOpen, MagnifyingGlass, SignOut, Users } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { useVault } from '../context/VaultContext'
 import { roleLabel } from '../lib/constants'
 import { Avatar, Kbd } from './ui'
 import { CommandPalette } from './CommandPalette'
 
-/** Marca neutra: na interface de trabalho não há cor de marca. */
+/** Marca: o mesmo cubo do favicon, ardósia com a face de cima em azul-céu. */
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <span aria-hidden className={clsx('inline-flex size-7 items-center justify-center rounded-lg bg-ink text-canvas', className)}>
-      <Cube size={16} weight="bold" />
-    </span>
+    <svg aria-hidden viewBox="0 0 32 32" className={clsx('size-7 shrink-0', className)}>
+      <rect width="32" height="32" rx="8" fill="var(--ink)" />
+      <path d="M16 7l8 4.5L16 16l-8-4.5z" fill="var(--accent)" />
+      <path d="M16 7l8 4.5v9L16 25l-8-4.5v-9z M8 11.5l8 4.5 8-4.5M16 16v9" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinejoin="round" />
+    </svg>
   )
 }
 
