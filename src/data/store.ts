@@ -157,12 +157,12 @@ export async function saveRequest(input: RequestInput, actor: Actor) {
   }
 }
 
-export async function setRequestStatus(r: AppRequest, status: AppRequest['status'], label: string, actor: Actor) {
+export async function setRequestStatus(r: AppRequest, status: AppRequest['status'], _label: string, actor: Actor) {
   if (r.status === status) return
   await updateDoc(doc(db, 'apps', r.appId, 'requests', r.id), { status, updatedAt: serverTimestamp(), updatedBy: actor.email })
 }
 
-export async function deleteRequest(r: AppRequest, actor: Actor) {
+export async function deleteRequest(r: AppRequest, _actor: Actor) {
   await deleteDoc(doc(db, 'apps', r.appId, 'requests', r.id))
 }
 
