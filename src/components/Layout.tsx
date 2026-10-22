@@ -161,7 +161,7 @@ export function Layout() {
                 className="flex h-[34px] items-center gap-1.5 rounded-full bg-warning-soft px-3 font-display text-[13px] font-medium text-warning shadow-[0_0_0_1px_color-mix(in_srgb,var(--warn)_40%,transparent)] transition-transform active:scale-[0.97]"
               >
                 <LockKeyOpen size={14} aria-hidden />
-                <span className="hidden sm:inline">Credentials Vault aberto</span>
+                <span className="hidden whitespace-nowrap sm:inline">Vault aberto</span>
               </button>
             ) : null}
             <UserMenu />
