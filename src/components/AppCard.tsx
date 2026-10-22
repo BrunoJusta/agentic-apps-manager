@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { ArrowUp, CaretDoubleUp, ChatCircleText, ClockCountdown, GithubLogo, Sparkle } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import type { AgenticApp } from '../lib/types'
-import { allTags, daysUntil } from '../lib/app-utils'
+import { allTags, blurb, daysUntil } from '../lib/app-utils'
 import { ENVS, isRequestOpen, maturityLabel, priorityLabel, ROTATION_WARNING_DAYS, statusLabel } from '../lib/constants'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
 import { trackSpotlight } from '../lib/spotlight'
@@ -71,7 +71,7 @@ export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; sec
             <PriorityIcon priority={app.priority} />
           </span>
         </div>
-        {app.shortDescription ? <p className="-mt-1 line-clamp-2 text-[13.5px] leading-snug text-ink-subtle">{app.shortDescription}</p> : null}
+        {app.description ? <p className="-mt-1 line-clamp-3 text-[13.5px] leading-snug text-ink-subtle">{blurb(app)}</p> : null}
         <div className="flex flex-wrap gap-1.5">
           {app.area ? <Badge color={appColor(app)}>{app.area}</Badge> : null}
           {showStatus ? <Badge color={STATUS_COLORS[app.status]}>{statusLabel(app.status)}</Badge> : <Badge>{maturityLabel(app.maturity)}</Badge>}

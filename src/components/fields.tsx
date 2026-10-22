@@ -13,28 +13,51 @@ export function PillPicker<T extends string>({
   onChange,
   options,
   label,
+  describedBy,
 }: {
   id?: string
   value: T
   onChange: (v: T) => void
   options: { value: T; label: ReactNode; title?: string }[]
   label: string
+  describedBy?: string
 }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
+  const selIdx = options.findIndex((o) => o.value === value)
+  const tabIdx = selIdx >= 0 ? selIdx : 0
+  // Setas movem e escolhem (semântica de radio); só a opção escolhida entra no Tab.
+  const onKeyDown = (e: React.KeyboardEvent, i: number) => {
+    const n = options.length
+    let next = -1
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (i + 1) % n
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (i - 1 + n) % n
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = n - 1
+    if (next < 0) return
+    e.preventDefault()
+    onChange(options[next].value)
+    refs.current[next]?.focus()
+  }
   return (
-    <div id={id} role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
-      {options.map((o) => {
+    <div id={id} role="radiogroup" aria-label={label} aria-describedby={describedBy} className="flex flex-wrap gap-1.5">
+      {options.map((o, i) => {
         const on = o.value === value
         return (
           <button
             key={o.value}
+            ref={(el) => {
+              refs.current[i] = el
+            }}
             type="button"
             role="radio"
             aria-checked={on}
+            tabIndex={i === tabIdx ? 0 : -1}
             title={o.title}
             onClick={() => onChange(o.value)}
+            onKeyDown={(e) => onKeyDown(e, i)}
             className={clsx(
-              'inline-flex h-[32px] items-center gap-1.5 rounded-full px-3.5 font-display text-[13px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97]',
-              on ? 'bg-ink text-canvas' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
+              'inline-flex h-[34px] items-center gap-1.5 rounded-full px-3.5 font-display text-[13px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97]',
+              on ? 'bg-ink text-canvas shadow-[0_1px_2px_rgba(0,0,0,0.12)]' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
             )}
           >
             {o.label}
@@ -222,7 +245,7 @@ export function Combobox({ id, value, onChange, options, placeholder = 'Procurar
           spellCheck={false}
         />
         {value && !open ? (
-          <button type="button" onClick={() => onChange('')} aria-label="Limpar" className="flex size-5 items-center justify-center rounded-full text-ink-tertiary hover:bg-sel hover:text-ink">
+          <button type="button" onClick={() => onChange('')} aria-label={`Limpar ${value}`} className="-mr-1.5 flex size-7 items-center justify-center rounded-full text-ink-tertiary transition-colors hover:bg-sel hover:text-ink">
             <X size={11} aria-hidden />
           </button>
         ) : (
@@ -254,7 +277,7 @@ export function MultiCombobox({ id, value, onChange, options, placeholder = 'Pro
   const keys = useComboKeys(all, query, open, setOpen, toggle)
   return (
     <div ref={ref} className="relative">
-      <div className={clsx(boxBase, 'flex min-h-[38px] flex-wrap items-center gap-1.5 px-1.5 py-1.5')} onClick={() => document.getElementById(id)?.focus()}>
+      <label htmlFor={id} className={clsx(boxBase, 'flex min-h-[38px] cursor-text flex-wrap items-center gap-1.5 px-1.5 py-1.5')}>
         {value.map((t) => (
           <span key={t} className="tg py-1 pr-1">
             {t}
@@ -294,7 +317,7 @@ export function MultiCombobox({ id, value, onChange, options, placeholder = 'Pro
           autoComplete="off"
           spellCheck={false}
         />
-      </div>
+      </label>
       {open ? <OptionList listId={listId} query={query} options={all} selected={value} active={keys.active} setActive={keys.setActive} onPick={toggle} /> : null}
     </div>
   )

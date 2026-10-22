@@ -5,7 +5,7 @@ import { Cube, Key, MagnifyingGlass, TextAa } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useVault } from '../context/VaultContext'
 import { usageIndex } from '../lib/vault-utils'
-import { matchesSearch } from '../lib/app-utils'
+import { blurb, matchesSearch } from '../lib/app-utils'
 import { statusLabel } from '../lib/constants'
 import { Kbd } from './ui'
 import { AppIcon } from './AppCard'
@@ -46,7 +46,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     const out: Item[] = apps
       .filter((a) => matchesSearch(a, s))
       .slice(0, 8)
-      .map((a) => ({ id: `a-${a.id}`, kind: 'app', title: a.name, subtitle: `${statusLabel(a.status)}${a.shortDescription ? `, ${a.shortDescription}` : ''}`, to: `/apps/${a.id}`, app: { name: a.name, icon: a.icon, area: a.area } }))
+      .map((a) => ({ id: `a-${a.id}`, kind: 'app', title: a.name, subtitle: `${statusLabel(a.status)}${a.description ? `, ${blurb(a)}` : ''}`, to: `/apps/${a.id}`, app: { name: a.name, icon: a.icon, area: a.area } }))
     if (s) {
       for (const it of vaultItems) {
         if (out.length > 40) break

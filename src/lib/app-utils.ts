@@ -56,12 +56,45 @@ export function normalizeApp(id: string, raw: Record<string, unknown>): AgenticA
     environments: envs,
     repo: { ...base.repo, ...(r.repo ?? {}) },
     links: Array.isArray(r.links) ? r.links.map((l) => ({ label: String(l.label ?? ''), url: String(l.url ?? '') })) : [],
-    governance: {
+    // Descrição curta deixou de existir: a descrição longa é cortada no cartão.
+    description: String(r.description ?? '').trim() ? String(r.description) : String(r.shortDescription ?? ''),
+    shortDescription: '',
+    governance: observationsMerged({
       ...base.governance,
       ...(r.governance ?? {}),
       monthlyCost: typeof r.governance?.monthlyCost === 'number' ? r.governance.monthlyCost : null,
-    },
+    }),
   }
+}
+
+/** Riscos e notas passaram a um só campo, Observações (guardado em governance.notes). */
+function observationsMerged(g: AgenticApp['governance']): AgenticApp['governance'] {
+  const risks = String(g.risks ?? '').trim()
+  const notes = String(g.notes ?? '').trim()
+  if (!risks) return { ...g, risks: '', notes: String(g.notes ?? '') }
+  return { ...g, risks: '', notes: notes ? `Riscos:\n${risks}\n\n${notes}` : `Riscos:\n${risks}` }
+}
+
+/** Caracteres da descrição que aparecem no cartão do board. */
+export const CARD_BLURB_MAX = 140
+
+/** Texto do cartão: a descrição cortada a CARD_BLURB_MAX caracteres, sem partir palavras. */
+export function blurb(app: Pick<AgenticApp, 'description'>): string {
+  const d = app.description.replace(/\s+/g, ' ').trim()
+  if (d.length <= CARD_BLURB_MAX) return d
+  const cut = d.slice(0, CARD_BLURB_MAX)
+  const sp = cut.lastIndexOf(' ')
+  return `${(sp > CARD_BLURB_MAX * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s,.;:]+$/, '')}…`
+}
+
+/** Nome a partir de um email nome.apelido@sogrape.pt: "Nome Apelido". */
+export function nameFromEmail(email: string): string {
+  const local = email.trim().split('@')[0] ?? ''
+  return local
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toLocaleUpperCase('pt') + w.slice(1).toLocaleLowerCase('pt'))
+    .join(' ')
 }
 
 /** Remove campos de sistema para gravar. */
@@ -127,7 +160,7 @@ export function matchesSearch(app: AgenticApp, q: string): boolean {
   if (!s) return true
   const hay = [
     app.name,
-    app.shortDescription,
+    app.description,
     app.area,
     app.owner.name,
     app.aiLead.name,

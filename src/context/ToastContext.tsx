@@ -2,22 +2,27 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 import { CheckCircle, WarningCircle, X } from '@phosphor-icons/react'
 
 type Tone = 'success' | 'error'
+interface ToastAction {
+  label: string
+  onClick: () => void
+}
 interface Toast {
   id: number
   tone: Tone
   text: string
+  action?: ToastAction
 }
 
-const Ctx = createContext<(text: string, tone?: Tone) => void>(() => {})
+const Ctx = createContext<(text: string, tone?: Tone, action?: ToastAction) => void>(() => {})
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
   const dismiss = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), [])
   const push = useCallback(
-    (text: string, tone: Tone = 'success') => {
+    (text: string, tone: Tone = 'success', action?: ToastAction) => {
       const id = Date.now() + Math.random()
-      setToasts((t) => [...t.slice(-3), { id, tone, text }])
-      window.setTimeout(() => dismiss(id), tone === 'error' ? 8000 : 4000)
+      setToasts((t) => [...t.slice(-3), { id, tone, text, action }])
+      window.setTimeout(() => dismiss(id), tone === 'error' || action ? 8000 : 4000)
     },
     [dismiss],
   )
@@ -33,6 +38,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <WarningCircle size={16} weight="fill" className="shrink-0 text-danger" aria-hidden />
             )}
             <span className="min-w-0 flex-1 text-ink">{t.text}</span>
+            {t.action ? (
+              <button
+                type="button"
+                onClick={() => {
+                  t.action?.onClick()
+                  dismiss(t.id)
+                }}
+                className="h-7 shrink-0 rounded-full bg-ink px-3 font-display text-[12.5px] font-medium text-canvas transition-transform active:scale-[0.97]"
+              >
+                {t.action.label}
+              </button>
+            ) : null}
             <button type="button" onClick={() => dismiss(t.id)} aria-label="Fechar aviso" className="flex size-6 shrink-0 items-center justify-center rounded-full text-ink-subtle hover:bg-sel hover:text-ink">
               <X size={12} aria-hidden />
             </button>

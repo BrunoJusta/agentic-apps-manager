@@ -61,7 +61,8 @@ service cloud.firestore {
 
     // ---------- utilizadores ----------
     match /users/{email} {
-      allow read: if isSogrape() && (email == myEmail() || isAdmin());
+      // Editors leem a lista para escolher o AI Lead de uma app.
+      allow read: if isSogrape() && (email == myEmail() || isEditor());
 
       allow create: if
         // o Admin de arranque cria o seu próprio documento

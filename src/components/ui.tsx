@@ -127,29 +127,39 @@ export function Field({
   children,
   htmlFor,
   className,
+  required,
 }: {
   label: string
-  hint?: string
+  hint?: ReactNode
   error?: string | null
   children: ReactNode
   htmlFor: string
   className?: string
+  required?: boolean
 }) {
   return (
     <div className={clsx('flex min-w-0 flex-col gap-1.5', className)}>
-      <label htmlFor={htmlFor} className="font-display text-[12px] font-medium text-ink-subtle">
+      <label htmlFor={htmlFor} className="flex items-center gap-1 font-display text-[12.5px] font-medium text-ink-muted">
         {label}
+        {required ? (
+          <>
+            <span aria-hidden className="text-danger">*</span>
+            <span className="sr-only">(obrigatório)</span>
+          </>
+        ) : null}
       </label>
       {children}
-      {error ? (
-        <p id={`${htmlFor}-error`} className="text-[12px] text-danger">
-          {error}
-        </p>
-      ) : hint ? (
-        <p id={`${htmlFor}-hint`} className="text-[12px] text-ink-tertiary">
-          {hint}
-        </p>
-      ) : null}
+      <div aria-live="polite">
+        {error ? (
+          <p id={`${htmlFor}-error`} className="text-[12px] text-danger">
+            {error}
+          </p>
+        ) : hint ? (
+          <p id={`${htmlFor}-hint`} className="text-[12px] text-ink-tertiary">
+            {hint}
+          </p>
+        ) : null}
+      </div>
     </div>
   )
 }

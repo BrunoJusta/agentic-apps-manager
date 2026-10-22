@@ -30,6 +30,7 @@ import { FiltersBar, GroupByChip } from '../components/FiltersBar'
 import { AppCardBody, AppCardLink, appColor } from '../components/AppCard'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
 import { ImportJsonDialog } from '../components/ImportJsonDialog'
+import { QuickCreateDialog } from '../components/QuickCreate'
 import { Button, Dialog, Dot, EmptyState, IconButton, Segmented, Skeleton } from '../components/ui'
 import { AppsTable } from '../components/AppsTable'
 import { trackSpotlight } from '../lib/spotlight'
@@ -52,13 +53,50 @@ function withTransition(fn: () => void) {
   else fn()
 }
 
-function DraggableCard({ app, secrets, index, disabled, animate }: { app: AgenticApp; secrets: VaultItem[]; index: number; disabled: boolean; animate: boolean }) {
+/** Partículas da entrada de uma app nova: ângulos fixos, distâncias variadas. */
+const SPARKS = Array.from({ length: 14 }, (_, i) => {
+  const a = (i / 14) * Math.PI * 2 + (i % 2 ? 0.18 : -0.12)
+  const d = 70 + ((i * 37) % 5) * 16
+  return { dx: Math.round(Math.cos(a) * d * 1.5), dy: Math.round(Math.sin(a) * d * 0.8), s: 4 + (i % 3) * 2, delay: 300 + (i % 4) * 30 }
+})
+
+/** Efeitos por cima do cartão de uma app acabada de criar (anel, brilho e partículas). */
+function BornEffects() {
+  return (
+    <>
+      <span aria-hidden className="born-ring" />
+      <span aria-hidden className="born-sheen" />
+      <span aria-hidden className="born-sparks">
+        {SPARKS.map((p, i) => (
+          <i key={i} style={{ ['--dx' as string]: `${p.dx}px`, ['--dy' as string]: `${p.dy}px`, ['--s' as string]: `${p.s}px`, animationDelay: `${p.delay}ms` }} className={i % 3 === 0 ? 'ink' : undefined} />
+        ))}
+      </span>
+    </>
+  )
+}
+
+function DraggableCard({ app, secrets, index, disabled, animate, born }: { app: AgenticApp; secrets: VaultItem[]; index: number; disabled: boolean; animate: boolean; born?: boolean }) {
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id: app.id, disabled })
   // tiramos o role="button" do dnd-kit para o cartão continuar a ser um link
   const { role: _role, ...attrs } = attributes
+  const ref = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (born) ref.current?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' })
+  }, [born])
   return (
-    <div ref={setNodeRef} {...attrs} {...listeners} aria-roledescription={disabled ? undefined : 'cartão arrastável'} className={clsx('outline-none', isDragging && 'opacity-30')}>
+    <div
+      ref={(el) => {
+        setNodeRef(el)
+        ref.current = el
+      }}
+      {...attrs}
+      {...listeners}
+      aria-roledescription={disabled ? undefined : 'cartão arrastável'}
+      style={born ? entityStyle(appColor(app)) : undefined}
+      className={clsx('relative outline-none', isDragging && 'opacity-30', born && 'born')}
+    >
       <AppCardLink app={app} secrets={secrets} index={animate ? index : 0} />
+      {born ? <BornEffects /> : null}
     </div>
   )
 }
@@ -126,6 +164,16 @@ export function AppsPage() {
   const [dragging, setDragging] = useState<AgenticApp | null>(null)
   const [gate, setGate] = useState<{ app: AgenticApp; missing: string[] } | null>(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [quick, setQuick] = useState<{ open: boolean; status: StatusKey }>({ open: false, status: 'ideia' })
+  const [born, setBorn] = useState<string | null>(null)
+  const openQuick = (status: StatusKey = 'ideia') => setQuick({ open: true, status })
+
+  // A animação de entrada dura pouco mais de 2 segundos; depois o cartão volta ao normal.
+  useEffect(() => {
+    if (!born) return
+    const t = window.setTimeout(() => setBorn(null), 2400)
+    return () => window.clearTimeout(t)
+  }, [born])
   const [animate, setAnimate] = useState(true)
   const firstPaint = useRef(true)
 
@@ -248,7 +296,7 @@ export function AppsPage() {
             </Button>
           ) : null}
           {canEdit ? (
-            <Button variant="primary" onClick={() => navigate("/apps/nova")}>
+            <Button variant="primary" onClick={() => openQuick()}>
               <Plus size={14} weight="bold" aria-hidden />
               Nova app
             </Button>
@@ -309,7 +357,7 @@ export function AppsPage() {
                   <UploadSimple size={14} aria-hidden />
                   Importar JSON
                 </Button>
-                <Button variant="primary" onClick={() => navigate('/apps/nova')}>
+                <Button variant="primary" onClick={() => openQuick()}>
                   <Plus size={14} weight="bold" aria-hidden />
                   Nova app
                 </Button>
@@ -332,10 +380,10 @@ export function AppsPage() {
                   col={col}
                   count={items.length}
                   droppable={!!field && canEdit}
-                  onAdd={canEdit && group === 'status' && col.key !== 'producao' ? () => navigate(`/apps/nova?estado=${col.key}`) : undefined}
+                  onAdd={canEdit && group === 'status' && col.key !== 'producao' ? () => openQuick(col.key as StatusKey) : undefined}
                 >
                   {items.map((a, i) => (
-                    <DraggableCard key={a.id} app={a} secrets={secretsByApp.get(a.id) ?? []} index={i} disabled={!field || !canEdit} animate={animate} />
+                    <DraggableCard key={a.id} app={a} secrets={secretsByApp.get(a.id) ?? []} index={i} disabled={!field || !canEdit} animate={animate} born={a.id === born} />
                   ))}
                   {items.length === 0 ? (
                     <p className="px-2 py-6 text-center text-[12px] text-ink-tertiary">{filtering ? 'Nada com estes filtros' : field && canEdit ? 'Arrasta uma app para aqui' : 'Vazio'}</p>
@@ -362,6 +410,19 @@ export function AppsPage() {
       ) : null}
 
       <ImportJsonDialog open={importOpen} onClose={() => setImportOpen(false)} />
+
+      <QuickCreateDialog
+        open={quick.open}
+        initialStatus={quick.status}
+        onClose={() => setQuick((q) => ({ ...q, open: false }))}
+        onCreated={(id, name) => {
+          setQuick((q) => ({ ...q, open: false }))
+          // Se a vista atual não mostrar o cartão, passa para o Kanban por estado, onde ele entra.
+          if (filters.view !== 'kanban' || group !== 'status') set({ view: 'kanban', group: 'status' })
+          setBorn(id)
+          toast(`${name} entrou no board.`, 'success', { label: 'Abrir ficha', onClick: () => navigate(`/apps/${id}`) })
+        }}
+      />
 
       <Dialog
         open={!!gate}

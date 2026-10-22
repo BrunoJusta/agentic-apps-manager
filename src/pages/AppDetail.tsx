@@ -24,7 +24,6 @@ import {
   UserCircle,
   Robot,
   Tag,
-  Warning,
   Note,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
@@ -33,7 +32,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useVault } from '../context/VaultContext'
 import { linkedItems } from '../lib/vault-utils'
-import { productionReadiness } from '../lib/app-utils'
+import { blurb, productionReadiness } from '../lib/app-utils'
 import { ENVS, isFinished, maturityLabel, PERSONAL_DATA, priorityLabel, repoAccountLabel, STATUSES, statusLabel } from '../lib/constants'
 import { fmtDate, fmtRelative } from '../lib/format'
 import { deleteApp, moveApp } from '../data/store'
@@ -262,15 +261,9 @@ function Governance({ app }: { app: AgenticApp }) {
           </Fact>
           <Fact icon={Tag} label="Classificação">{app.governance.dataClassification}</Fact>
         </dl>
-        {app.governance.risks ? (
-          <>
-            <h3 className="mt-4 flex items-center gap-1.5 text-[12px] text-ink-subtle"><Warning size={14} aria-hidden />Riscos</h3>
-            <p className="mt-1 text-sm whitespace-pre-line text-ink">{app.governance.risks}</p>
-          </>
-        ) : null}
         {app.governance.notes ? (
           <>
-            <h3 className="mt-4 flex items-center gap-1.5 text-[12px] text-ink-subtle"><Note size={14} aria-hidden />Notas</h3>
+            <h3 className="mt-4 flex items-center gap-1.5 text-[12px] text-ink-subtle"><Note size={14} aria-hidden />Observações</h3>
             <p className="mt-1 text-sm whitespace-pre-line text-ink">{app.governance.notes}</p>
           </>
         ) : null}
@@ -361,7 +354,7 @@ export function AppDetailPage() {
               <h1 className="font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink min-[760px]:text-[32px] min-[760px]:leading-10" style={{ viewTransitionName: `app-${app.id}` }}>
                 {app.name}
               </h1>
-              {app.shortDescription ? <p className="mt-1.5 max-w-[65ch] text-[15.5px] leading-[1.65] text-ink-subtle">{app.shortDescription}</p> : null}
+              {app.description ? <p className="mt-1.5 max-w-[65ch] text-[15.5px] leading-[1.65] text-ink-subtle">{blurb(app)}</p> : null}
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 {app.area ? <Badge color={areaColor(app.area)}>{app.area}</Badge> : null}
                 {!canEdit ? <Badge color={STATUS_COLORS[app.status]}>{statusLabel(app.status)}</Badge> : null}

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { CaretDown, CaretUp, Table } from '@phosphor-icons/react'
 import { ENVS, maturityLabel, priorityLabel, repoAccountLabel, STATUSES, statusLabel } from '../lib/constants'
-import { priorityRank } from '../lib/app-utils'
+import { blurb, priorityRank } from '../lib/app-utils'
 import { fmtDate, fmtRelative, toDate } from '../lib/format'
 import type { AgenticApp } from '../lib/types'
 import { AppIcon, PriorityIcon } from './AppCard'
@@ -92,7 +92,7 @@ export function AppsTable({ apps, empty }: { apps: AgenticApp[]; empty?: React.R
                           <Link to={`/apps/${a.id}`} className="block truncate font-display font-semibold text-ink hover:underline">
                             {a.name}
                           </Link>
-                          {a.shortDescription ? <span className="block truncate text-[12px] text-ink-subtle">{a.shortDescription}</span> : null}
+                          {a.description ? <span className="block truncate text-[12px] text-ink-subtle">{blurb(a)}</span> : null}
                         </div>
                       </div>
                     </td>

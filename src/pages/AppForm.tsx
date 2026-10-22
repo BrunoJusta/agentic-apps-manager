@@ -1,37 +1,25 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { AppIcon } from '../components/AppCard'
+import { AppIcon, PriorityIcon } from '../components/AppCard'
 import { fileToSquareIcon } from '../lib/image'
 import { Link, useBlocker, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { ArrowLeft, Cloud, Flag, GitBranch, IdentificationCard, ImageSquare, LinkSimple, Plus, ShieldCheck, Stack as StackIcon, X } from '@phosphor-icons/react'
+import { ArrowCounterClockwise, ArrowLeft, Cloud, Flag, GitBranch, IdentificationCard, ImageSquare, LinkSimple, Plus, ShieldCheck, Stack as StackIcon, UsersThree, WarningCircle, X } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import {
-  AUTH_OPTIONS,
-  DB_TYPES,
-  emptyApp,
-  ENVS,
-  HOSTINGS,
-  LINK_SUGGESTIONS,
-  MATURITIES,
-  DATA_CLASSIFICATIONS,
-  PRIORITIES,
-  REPO_ACCOUNTS,
-  STACK_SUGGESTIONS,
-  STATUSES,
-} from '../lib/constants'
-import { productionReadiness, toInput } from '../lib/app-utils'
+import { AUTH_OPTIONS, DATA_CLASSIFICATIONS, DB_TYPES, emptyApp, ENVS, HOSTINGS, LINK_SUGGESTIONS, MATURITIES, PRIORITIES, REPO_ACCOUNTS, STACK_SUGGESTIONS, STATUSES } from '../lib/constants'
+import { blurb, CARD_BLURB_MAX, productionReadiness, toInput } from '../lib/app-utils'
 import { createApp, updateApp } from '../data/store'
 import type { AppInput, EnvKey, Environment, MaturityKey, PriorityKey, RepoAccount, StatusKey } from '../lib/types'
-import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, PersonInput, Segmented, Skeleton, Textarea } from '../components/ui'
+import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, Segmented, Skeleton, Textarea } from '../components/ui'
 import { Combobox, MultiCombobox, PillPicker, Switch } from '../components/fields'
-import { PriorityIcon } from '../components/AppCard'
+import { AiLeadPicker, EmailPersonInput } from '../components/people'
 
 const SECTIONS: { id: string; label: string; icon: Icon }[] = [
   { id: 'identidade', label: 'Identidade', icon: IdentificationCard },
   { id: 'estado', label: 'Estado', icon: Flag },
+  { id: 'pessoas', label: 'Pessoas', icon: UsersThree },
   { id: 'stack', label: 'Stack', icon: StackIcon },
   { id: 'ambientes', label: 'Ambientes', icon: Cloud },
   { id: 'repositorio', label: 'Repositório', icon: GitBranch },
@@ -39,14 +27,41 @@ const SECTIONS: { id: string; label: string; icon: Icon }[] = [
   { id: 'governo', label: 'Governance', icon: ShieldCheck },
 ]
 
-function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: ReactNode }) {
+type Errors = { name?: string; area?: string; aiLead?: string; owner?: string; prod?: string[] }
+
+const draftKey = (id: string | undefined) => `agentic-hub:draft:${id ?? 'nova'}`
+const readDraft = (key: string): AppInput | null => {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as AppInput) : null
+  } catch {
+    return null
+  }
+}
+const writeDraft = (key: string, v: AppInput | null) => {
+  try {
+    if (v) localStorage.setItem(key, JSON.stringify(v))
+    else localStorage.removeItem(key)
+  } catch {
+    /* sem armazenamento: o rascunho é só uma conveniência */
+  }
+}
+
+function Section({ id, icon: I, title, description, children }: { id: string; icon: Icon; title: string; description?: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-[140px] rounded-card bg-surface-1 p-5 shadow-e2 sm:p-6">
-      <h2 id={`${id}-title`} className="font-display text-[20px] leading-7 font-semibold tracking-[-0.03em] text-ink sm:text-[24px] sm:leading-8">
-        {title}
-      </h2>
-      {description ? <p className="mt-1 max-w-[65ch] text-[13.5px] text-ink-subtle">{description}</p> : null}
-      <div className="mt-5 flex flex-col gap-5">{children}</div>
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-[168px] rounded-card bg-surface-1 p-5 shadow-e2 min-[860px]:scroll-mt-[96px] sm:p-7">
+      <div className="flex items-start gap-3">
+        <span aria-hidden className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-ink-muted">
+          <I size={16} />
+        </span>
+        <div className="min-w-0">
+          <h2 id={`${id}-title`} className="font-display text-[18px] leading-7 font-semibold tracking-[-0.025em] text-balance text-ink sm:text-[20px]">
+            {title}
+          </h2>
+          {description ? <p className="mt-0.5 max-w-[60ch] text-[13.5px] text-pretty text-ink-subtle">{description}</p> : null}
+        </div>
+      </div>
+      <div className="mt-6 flex flex-col gap-6">{children}</div>
     </section>
   )
 }
@@ -57,12 +72,20 @@ function IconPicker({ value, name, area, onChange }: { value: string; name: stri
   const [busy, setBusy] = useState(false)
   return (
     <div className="flex items-center gap-4">
-      <AppIcon app={{ name: name || '?', icon: value, area }} size={72} />
-      <div className="flex min-w-0 flex-col gap-2">
-        <span className="font-display text-[12px] font-medium text-ink-subtle">Ícone da app</span>
-        <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        aria-label={value ? 'Trocar ícone da app' : 'Carregar ícone da app'}
+        className="group relative shrink-0 rounded-[18px] transition-transform active:scale-[0.97]"
+      >
+        <AppIcon app={{ name: name || '?', icon: value, area }} size={64} />
+        <span aria-hidden className="absolute inset-0 flex items-center justify-center rounded-[16px] bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+          <ImageSquare size={20} />
+        </span>
+      </button>
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" loading={busy} onClick={() => inputRef.current?.click()}>
-            <ImageSquare size={14} aria-hidden />
             {value ? 'Trocar ícone' : 'Carregar ícone'}
           </Button>
           {value ? (
@@ -71,7 +94,7 @@ function IconPicker({ value, name, area, onChange }: { value: string; name: stri
             </Button>
           ) : null}
         </div>
-        <p className={err ? 'text-[12px] text-danger' : 'text-[12px] text-ink-tertiary'}>{err ?? 'Formato quadrado 1:1. Outras proporções são cortadas ao centro e reduzidas para 256×256.'}</p>
+        <p className={err ? 'text-[12px] text-danger' : 'text-[12px] text-ink-tertiary'}>{err ?? 'Quadrado, de preferência. Fica com 256×256.'}</p>
         <input
           ref={inputRef}
           type="file"
@@ -99,6 +122,35 @@ function IconPicker({ value, name, area, onChange }: { value: string; name: stri
   )
 }
 
+/** Descrição com contador e pré-visualização ao vivo do texto que aparece no cartão do board. */
+function DescriptionField({ value, onChange, name }: { value: string; onChange: (v: string) => void; name: string }) {
+  const len = value.replace(/\s+/g, ' ').trim().length
+  const cut = len > CARD_BLURB_MAX
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <Field
+        label="Descrição"
+        htmlFor="f-desc"
+        hint={
+          <span className="tabular">
+            {len ? `${len} caracteres. ` : ''}
+            {cut ? `O cartão mostra os primeiros ${CARD_BLURB_MAX}.` : `Os primeiros ${CARD_BLURB_MAX} aparecem no cartão do board.`}
+          </span>
+        }
+      >
+        <Textarea id="f-desc" value={value} onChange={(e) => onChange(e.target.value)} placeholder="O que faz, para quem, e que problema resolve…" className="min-h-32" />
+      </Field>
+      <div aria-hidden className="hidden flex-col gap-1.5 lg:flex">
+        <span className="font-display text-[12.5px] font-medium text-ink-muted">No cartão</span>
+        <div className="rounded-[14px] bg-canvas p-4 shadow-ring">
+          <p className="truncate font-display text-[14px] font-semibold text-ink">{name || 'Nome da app'}</p>
+          <p className={clsx('mt-1 line-clamp-3 text-[13px] leading-snug', value ? 'text-ink-subtle' : 'text-ink-tertiary')}>{value ? blurb({ description: value }) : 'A descrição aparece aqui.'}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Datalist({ id, options }: { id: string; options: string[] }) {
   return (
     <datalist id={id}>
@@ -107,6 +159,12 @@ function Datalist({ id, options }: { id: string; options: string[] }) {
       ))}
     </datalist>
   )
+}
+
+/** Conta do repositório deduzida do URL, quando dá para saber. */
+function accountFromUrl(url: string): RepoAccount | null {
+  if (/aistudio\.google\.com/i.test(url)) return 'ai_studio'
+  return null
 }
 
 export function AppFormPage() {
@@ -118,6 +176,7 @@ export function AppFormPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const existing = id ? byId(id) : undefined
+  const key = draftKey(id)
 
   const initial = useMemo<AppInput | null>(() => {
     if (isNew) {
@@ -132,13 +191,31 @@ export function AppFormPage() {
 
   const [form, setForm] = useState<AppInput | null>(initial)
   const [saving, setSaving] = useState(false)
-  const [errors, setErrors] = useState<{ name?: string; readiness?: string[] }>({})
+  const [errors, setErrors] = useState<Errors>({})
+  const [draft, setDraft] = useState<AppInput | null>(null)
 
   useEffect(() => {
     if (!form && initial) setForm(initial)
   }, [initial, form])
 
+  // Rascunho local: se a página fechou com alterações por guardar, oferece recuperá-las.
+  const initialReady = !!initial
+  useEffect(() => {
+    if (!initial) return
+    const d = readDraft(key)
+    if (d && JSON.stringify(d) !== JSON.stringify(initial)) setDraft(d)
+    else writeDraft(key, null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialReady, key])
+
   const dirty = !!form && !!initial && JSON.stringify(form) !== JSON.stringify(initial)
+
+  useEffect(() => {
+    if (!form || draft) return
+    const t = window.setTimeout(() => writeDraft(key, dirty ? form : null), 400)
+    return () => window.clearTimeout(t)
+  }, [form, dirty, key, draft])
+
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && !saving && currentLocation.pathname !== nextLocation.pathname)
 
   useEffect(() => {
@@ -150,14 +227,24 @@ export function AppFormPage() {
     return () => window.removeEventListener('beforeunload', h)
   }, [dirty])
 
-  const tagSuggestions = useMemo(() => {
-    return {
+  // A barra de guardar é fixa em baixo: o campo com foco nunca fica por trás dela.
+  useEffect(() => {
+    const el = document.documentElement
+    el.style.scrollPaddingBottom = '120px'
+    return () => {
+      el.style.scrollPaddingBottom = ''
+    }
+  }, [])
+
+  const tagSuggestions = useMemo(
+    () => ({
       frontend: [...new Set([...STACK_SUGGESTIONS.frontend, ...apps.flatMap((a) => a.stack.frontend)])],
       backend: [...new Set([...STACK_SUGGESTIONS.backend, ...apps.flatMap((a) => a.stack.backend)])],
       llm: [...new Set([...STACK_SUGGESTIONS.llm, ...apps.flatMap((a) => a.stack.llm)])],
       frameworks: [...new Set([...STACK_SUGGESTIONS.frameworks, ...apps.flatMap((a) => a.stack.frameworks)])],
-    }
-  }, [apps])
+    }),
+    [apps],
+  )
   const areas = useMemo(() => [...new Set(apps.map((a) => a.area).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt')), [apps])
   const infra = useMemo(() => {
     const envs = apps.flatMap((a) => Object.values(a.environments))
@@ -167,6 +254,7 @@ export function AppFormPage() {
       auth: [...new Set([...AUTH_OPTIONS, ...apps.map((a) => a.stack.auth).filter(Boolean)])],
     }
   }, [apps])
+
   const [activeSection, setActiveSection] = useState('identidade')
   const formReady = !!form
   useEffect(() => {
@@ -185,146 +273,264 @@ export function AppFormPage() {
     return () => obs.disconnect()
   }, [formReady])
 
+  // Mantém o separador ativo visível na navegação horizontal (telemóvel).
+  useEffect(() => {
+    document.getElementById(`chip-${activeSection}`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [activeSection])
+
   if (!canEdit) return <EmptyState title="Só Editors e Admins podem editar fichas." action={<Link to="/" className="text-accent-text underline">Voltar ao board</Link>} />
   if (!isNew && !loading && !existing) return <EmptyState title="Esta app não existe ou foi apagada." action={<Link to="/" className="text-accent-text underline">Voltar ao board</Link>} />
   if (!form) {
     return (
-      <div className="flex flex-col gap-3 p-8" role="status" aria-label="A carregar">
+      <div className="flex flex-col gap-3 py-10" role="status" aria-label="A carregar">
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-40" />
+        <Skeleton className="h-56 rounded-card" />
+        <Skeleton className="h-40 rounded-card" />
       </div>
     )
   }
 
   const up = (patch: Partial<AppInput>) => setForm((f) => (f ? { ...f, ...patch } : f))
   const upEnv = (k: EnvKey, patch: Partial<Environment>) => setForm((f) => (f ? { ...f, environments: { ...f.environments, [k]: { ...f.environments[k], ...patch } } } : f))
+  const clearError = (k: keyof Errors) => errors[k] && setErrors((e) => ({ ...e, [k]: undefined }))
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    const errs: typeof errors = {}
+    const errs: Errors = {}
     if (!form.name.trim()) errs.name = 'Dá um nome à app.'
+    if (!form.area.trim()) errs.area = 'Escolhe a área ou escreve uma nova.'
+    if (!form.aiLead.email) errs.aiLead = 'Escolhe quem lidera a parte de IA.'
     if (form.status === 'producao') {
       const r = productionReadiness(form)
-      if (!r.ready) errs.readiness = r.missing
+      if (!r.items[0].ok) errs.owner = 'Para estar em Production, a app precisa de Product Owner.'
+      const prodMissing = r.items.slice(1).filter((i) => !i.ok).map((i) => i.label)
+      if (prodMissing.length) errs.prod = prodMissing
     }
     setErrors(errs)
-    if (errs.name) {
-      document.getElementById('f-name')?.focus()
-      return
-    }
-    if (errs.readiness) {
-      document.getElementById('form-errors')?.focus()
+    const first = errs.name ? 'f-name' : errs.area ? 'f-area' : errs.aiLead ? 'f-ailead' : errs.owner ? 'f-owner' : errs.prod ? 'env-prod' : null
+    if (first) {
+      const el = document.getElementById(first)
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      el?.focus({ preventScroll: true })
       return
     }
     setSaving(true)
     try {
+      const gh = form.repo.url.match(/github\.com\/([^/\s]+)/i)?.[1]
       const clean: AppInput = {
         ...form,
         name: form.name.trim(),
+        area: form.area.trim(),
         links: form.links.filter((l) => l.url.trim()),
+        repo: { ...form.repo, owner: gh ?? form.repo.owner, branch: form.repo.branch || 'main' },
       }
       if (isNew) {
         const newId = await createApp(clean, actor)
+        writeDraft(key, null)
         toast('App criada.')
         navigate(`/apps/${newId}`, { replace: true })
       } else {
         await updateApp(id!, initial!, clean, actor)
+        writeDraft(key, null)
         toast('Alterações guardadas.')
         navigate(`/apps/${id}`)
       }
     } catch (err) {
-      toast(`Não foi possível guardar: ${(err as Error).message}`, 'error')
+      toast(`Não foi possível guardar: ${(err as Error).message}. Tenta outra vez; as alterações continuam aqui.`, 'error')
       setSaving(false)
     }
   }
 
   const backTo = isNew ? '/' : `/apps/${id}`
+  const prodEnvError = errors.prod?.length ? `Para estar em Production falta: ${errors.prod.join(', ').toLowerCase()}.` : null
 
   return (
-    <form onSubmit={submit} noValidate className="pb-32">
+    <form onSubmit={submit} noValidate className="pb-36">
       <div className="pt-8 pb-6">
         <Link to={backTo} className="inline-flex items-center gap-1 rounded-full font-display text-[13px] font-medium text-ink-subtle hover:text-ink">
           <ArrowLeft size={14} aria-hidden />
           {isNew ? 'Lifecycle Management' : initial?.name}
         </Link>
-        <h1 className="mt-3 font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink min-[760px]:text-[32px] min-[760px]:leading-10">{isNew ? 'Nova app' : 'Editar ficha'}</h1>
+        <div className="mt-3 flex items-center gap-4">
+          <AppIcon app={{ name: form.name || '?', icon: form.icon, area: form.area }} size={48} className="hidden sm:inline-flex" />
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink min-[760px]:text-[32px] min-[760px]:leading-10">{isNew ? 'Nova app' : form.name || 'Editar ficha'}</h1>
+            <p className="mt-0.5 text-[13.5px] text-ink-subtle">
+              Os campos com <span className="text-danger">*</span> são obrigatórios. O resto preenche-se quando houver informação.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex gap-8">
-        <nav aria-label="Secções do formulário" className="sticky top-[84px] hidden h-fit w-[220px] shrink-0 flex-col gap-0.5 min-[860px]:flex">
-          {SECTIONS.map((s) => (
-            <a
-              key={s.id}
-              href={`#${s.id}`}
-              aria-current={activeSection === s.id ? 'true' : undefined}
-              className={clsx(
-                'flex h-9 items-center gap-2.5 rounded-lg px-3 font-display text-[13.5px] font-medium transition-[background-color,color,box-shadow] duration-150',
-                activeSection === s.id ? 'bg-surface-1 text-ink shadow-e2' : 'text-ink-subtle hover:bg-sel hover:text-ink',
-              )}
+      {draft ? (
+        <div role="status" className="enter mb-5 flex flex-wrap items-center gap-3 rounded-card bg-warning-soft px-4 py-3 text-sm text-ink shadow-[0_0_0_1px_color-mix(in_srgb,var(--warn)_35%,transparent)]">
+          <ArrowCounterClockwise size={16} className="shrink-0 text-warning" aria-hidden />
+          <span className="min-w-0 flex-1">Há alterações que não chegaste a guardar nesta ficha.</span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                writeDraft(key, null)
+                setDraft(null)
+              }}
             >
-              <s.icon size={16} weight={activeSection === s.id ? 'fill' : 'regular'} aria-hidden className="shrink-0" />
-              {s.label}
-            </a>
-          ))}
+              Descartar
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                setForm(draft)
+                setDraft(null)
+              }}
+            >
+              Recuperar
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Navegação por secções em telemóvel: tira horizontal fixa. */}
+      <nav aria-label="Secções do formulário" className="scroll-x sticky top-[104px] z-20 -mx-4 mb-4 flex gap-1.5 overflow-x-auto bg-canvas/90 px-4 py-2 backdrop-blur-[10px] min-[860px]:hidden">
+        {SECTIONS.map((s) => (
+          <a
+            key={s.id}
+            id={`chip-${s.id}`}
+            href={`#${s.id}`}
+            aria-current={activeSection === s.id ? 'true' : undefined}
+            className={clsx(
+              'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-display text-[13px] font-medium transition-colors',
+              activeSection === s.id ? 'bg-ink text-canvas' : 'bg-surface-1 text-ink-muted shadow-ring',
+            )}
+          >
+            <s.icon size={14} aria-hidden />
+            {s.label}
+          </a>
+        ))}
+      </nav>
+
+      <div className="flex gap-8">
+        <nav aria-label="Secções do formulário" className="sticky top-[84px] hidden h-fit w-[200px] shrink-0 flex-col gap-0.5 min-[860px]:flex">
+          {SECTIONS.map((s) => {
+            const hasError =
+              (s.id === 'identidade' && (errors.name || errors.area)) || (s.id === 'pessoas' && (errors.aiLead || errors.owner)) || (s.id === 'ambientes' && errors.prod?.length)
+            return (
+              <a
+                key={s.id}
+                href={`#${s.id}`}
+                aria-current={activeSection === s.id ? 'true' : undefined}
+                className={clsx(
+                  'flex h-9 items-center gap-2.5 rounded-lg px-3 font-display text-[13.5px] font-medium transition-[background-color,color,box-shadow] duration-150',
+                  activeSection === s.id ? 'bg-surface-1 text-ink shadow-e2' : 'text-ink-subtle hover:bg-sel hover:text-ink',
+                )}
+              >
+                <s.icon size={16} weight={activeSection === s.id ? 'fill' : 'regular'} aria-hidden className="shrink-0" />
+                <span className="flex-1">{s.label}</span>
+                {hasError ? <WarningCircle size={15} weight="fill" className="text-danger" aria-label="Tem erros" /> : null}
+              </a>
+            )
+          })}
         </nav>
 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          {errors.readiness ? (
-            <div id="form-errors" tabIndex={-1} role="alert" className="notice danger mb-2 py-2 text-sm text-danger outline-none">
-              <p className="font-medium">Para ficar em Production falta:</p>
-              <ul className="mt-1 list-inside list-disc">
-                {errors.readiness.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <Section id="identidade" title="Identidade">
+          <Section id="identidade" icon={IdentificationCard} title="Identidade">
             <IconPicker value={form.icon} name={form.name} area={form.area} onChange={(icon) => up({ icon })} />
-            <Field label="Nome" htmlFor="f-name" error={errors.name}>
-              <Input id="f-name" value={form.name} onChange={(e) => up({ name: e.target.value })} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'f-name-error' : undefined} autoComplete="off" />
-            </Field>
-            <Field label="Descrição curta" htmlFor="f-short" hint="Aparece no cartão do board. Uma frase.">
-              <Input id="f-short" value={form.shortDescription} maxLength={140} onChange={(e) => up({ shortDescription: e.target.value })} autoComplete="off" />
-            </Field>
-            <Field label="Descrição" htmlFor="f-desc" hint="O que faz, para quem, e que problema resolve.">
-              <Textarea id="f-desc" value={form.description} onChange={(e) => up({ description: e.target.value })} />
-            </Field>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field label="Área ou departamento" htmlFor="f-area">
-                <Combobox id="f-area" value={form.area} onChange={(area) => up({ area })} options={areas} placeholder="Ex.: Supply Chain" />
+              <Field label="Nome" htmlFor="f-name" error={errors.name} required>
+                <Input
+                  id="f-name"
+                  value={form.name}
+                  onChange={(e) => {
+                    up({ name: e.target.value })
+                    clearError('name')
+                  }}
+                  aria-invalid={!!errors.name || undefined}
+                  aria-describedby={errors.name ? 'f-name-error' : undefined}
+                  placeholder="Ex.: Planeamento de Linhas…"
+                  autoComplete="off"
+                />
+              </Field>
+              <Field label="Área" htmlFor="f-area" error={errors.area} required>
+                <Combobox
+                  id="f-area"
+                  value={form.area}
+                  onChange={(area) => {
+                    up({ area })
+                    clearError('area')
+                  }}
+                  options={areas}
+                  placeholder="Procurar ou adicionar área…"
+                />
               </Field>
             </div>
-            <Field label="Prioridade" htmlFor="f-prio">
-              <PillPicker<PriorityKey>
-                id="f-prio"
-                label="Prioridade"
-                value={form.priority}
-                onChange={(priority) => up({ priority })}
-                options={[...PRIORITIES].reverse().map((p) => ({ value: p.key, label: (<><PriorityIcon priority={p.key} />{p.label}</>) }))}
-              />
-            </Field>
+            <DescriptionField value={form.description} name={form.name} onChange={(description) => up({ description })} />
           </Section>
 
-          <Section id="estado" title="Estado" description="Production exige Product Owner e ambiente de produção preenchidos. O repositório é opcional.">
+          <Section id="estado" icon={Flag} title="Estado" description="Onde está a app, quão madura é e quando arrancou.">
             <Field label="Estado" htmlFor="f-status">
               <PillPicker<StatusKey> id="f-status" label="Estado" value={form.status} onChange={(status) => up({ status })} options={STATUSES.map((s) => ({ value: s.key, label: s.label, title: s.hint }))} />
             </Field>
-            <Field label="Maturidade" htmlFor="f-mat">
-              <PillPicker<MaturityKey> id="f-mat" label="Maturidade" value={form.maturity} onChange={(maturity) => up({ maturity })} options={MATURITIES.map((s) => ({ value: s.key, label: s.label }))} />
-            </Field>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <Field label="Maturidade" htmlFor="f-mat">
+                <PillPicker<MaturityKey> id="f-mat" label="Maturidade" value={form.maturity} onChange={(maturity) => up({ maturity })} options={MATURITIES.map((s) => ({ value: s.key, label: s.label }))} />
+              </Field>
+              <Field label="Prioridade" htmlFor="f-prio">
+                <PillPicker<PriorityKey>
+                  id="f-prio"
+                  label="Prioridade"
+                  value={form.priority}
+                  onChange={(priority) => up({ priority })}
+                  options={[...PRIORITIES].reverse().map((p) => ({
+                    value: p.key,
+                    label: (
+                      <>
+                        <PriorityIcon priority={p.key} />
+                        {p.label}
+                      </>
+                    ),
+                  }))}
+                />
+              </Field>
+            </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Data de início" htmlFor="f-start">
                 <Input id="f-start" type="date" value={form.startDate} onChange={(e) => up({ startDate: e.target.value })} />
               </Field>
               <Field label="Data de go-live" htmlFor="f-golive">
-                <Input id="f-golive" type="date" value={form.goLiveDate} onChange={(e) => up({ goLiveDate: e.target.value })} />
+                <Input id="f-golive" type="date" value={form.goLiveDate} min={form.startDate || undefined} onChange={(e) => up({ goLiveDate: e.target.value })} />
               </Field>
             </div>
           </Section>
 
-          <Section id="stack" title="Stack" description="Procura na lista ou escreve para adicionar uma opção nova. As novas opções ficam disponíveis para as outras apps.">
+          <Section id="pessoas" icon={UsersThree} title="Pessoas" description="Quem lidera a IA e quem responde pela app do lado do negócio.">
+            <Field label="AI Lead" htmlFor="f-ailead" error={errors.aiLead} hint="Editors e Admins de Access Control." required>
+              <AiLeadPicker
+                id="f-ailead"
+                value={form.aiLead}
+                onChange={(aiLead) => {
+                  up({ aiLead })
+                  clearError('aiLead')
+                }}
+                invalid={!!errors.aiLead}
+                describedBy={errors.aiLead ? 'f-ailead-error' : 'f-ailead-hint'}
+              />
+            </Field>
+            <Field label="Product Owner" htmlFor="f-owner" error={errors.owner} hint="Escreve o email; o nome preenche-se sozinho e podes corrigi-lo.">
+              <EmailPersonInput
+                id="f-owner"
+                value={form.owner}
+                onChange={(owner) => {
+                  up({ owner })
+                  clearError('owner')
+                }}
+                invalid={!!errors.owner}
+                describedBy={errors.owner ? 'f-owner-error' : 'f-owner-hint'}
+              />
+            </Field>
+          </Section>
+
+          <Section id="stack" icon={StackIcon} title="Stack" description="Procura na lista ou escreve para adicionar. O que adicionares fica disponível para as outras apps.">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Frontend" htmlFor="f-fe">
                 <MultiCombobox id="f-fe" value={form.stack.frontend} onChange={(v) => up({ stack: { ...form.stack, frontend: v } })} options={tagSuggestions.frontend} placeholder="React, Vite…" />
@@ -344,38 +550,58 @@ export function AppFormPage() {
             </div>
           </Section>
 
-          <Section id="ambientes" title="Ambientes" description="Infraestrutura de cada ambiente. As variáveis e os secrets gerem-se na ficha da app, separador Ambientes.">
+          <Section id="ambientes" icon={Cloud} title="Ambientes" description="Liga os ambientes que existem. Variáveis e secrets ligam-se na ficha da app.">
             {ENVS.map((env) => {
               const e = form.environments[env.key]
+              const err = env.key === 'prod' ? prodEnvError : null
               return (
-                <fieldset key={env.key} className={clsx('rounded-xl p-4 transition-colors', e.enabled ? 'srcf' : 'shadow-[inset_0_0_0_1px_var(--hairline-strong)]')}>
+                <fieldset
+                  key={env.key}
+                  id={`env-${env.key}`}
+                  tabIndex={-1}
+                  aria-describedby={err ? 'env-prod-error' : undefined}
+                  className={clsx(
+                    'rounded-xl p-4 outline-none transition-[background-color,box-shadow] duration-200',
+                    err ? 'shadow-[inset_0_0_0_1px_var(--danger)]' : e.enabled ? 'srcf' : 'shadow-[inset_0_0_0_1px_var(--hairline)]',
+                  )}
+                >
                   <legend className="sr-only">{env.label}</legend>
                   <Switch
                     id={`f-${env.key}-enabled`}
                     checked={e.enabled}
-                    onChange={(enabled) => upEnv(env.key, { enabled })}
+                    onChange={(enabled) => {
+                      upEnv(env.key, { enabled })
+                      if (env.key === 'prod') clearError('prod')
+                    }}
                     label={
-                      <span className="font-semibold">
-                        {env.label} <span className="font-mono text-[11px] font-normal text-ink-subtle">{env.short}</span>
+                      <span className="flex items-center gap-2 font-semibold">
+                        <span className="tg mn">{env.short}</span>
+                        {env.label}
                       </span>
                     }
+                    description={e.enabled ? undefined : 'Desligado. Liga para descrever este ambiente.'}
                   />
+                  {err ? (
+                    <p id="env-prod-error" role="alert" className="mt-3 text-[12.5px] text-danger">
+                      {err}
+                    </p>
+                  ) : null}
                   {e.enabled ? (
                     <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <Field label="Tipo de base de dados" htmlFor={`f-${env.key}-dbtype`}>
-                        <Combobox id={`f-${env.key}-dbtype`} value={e.dbType} onChange={(dbType) => upEnv(env.key, { dbType })} options={infra.db} />
-                      </Field>
-                      <Field label="Projeto da BD" htmlFor={`f-${env.key}-dbproj`}>
-                        <Input id={`f-${env.key}-dbproj`} value={e.dbProject} onChange={(ev) => upEnv(env.key, { dbProject: ev.target.value })} placeholder="sogrape-ai-studio" spellCheck={false} autoComplete="off" />
-                      </Field>
-                      <Field label="ID da base de dados" htmlFor={`f-${env.key}-dbid`}>
-                        <Input id={`f-${env.key}-dbid`} value={e.dbId} onChange={(ev) => upEnv(env.key, { dbId: ev.target.value })} className="font-mono text-[13px]" spellCheck={false} autoComplete="off" />
-                      </Field>
                       <Field label="Alojamento" htmlFor={`f-${env.key}-host`}>
                         <Combobox id={`f-${env.key}-host`} value={e.hosting} onChange={(hosting) => upEnv(env.key, { hosting })} options={infra.hosting} />
                       </Field>
-                      <Field label={`URL da app em ${env.short}`} hint="O endereço onde a app corre neste ambiente." htmlFor={`f-${env.key}-appurl`} className="sm:col-span-2">
-                        <Input id={`f-${env.key}-appurl`} type="url" value={e.appUrl} onChange={(ev) => upEnv(env.key, { appUrl: ev.target.value })} placeholder="https://" spellCheck={false} />
+                      <Field label="Tipo de base de dados" htmlFor={`f-${env.key}-dbtype`}>
+                        <Combobox id={`f-${env.key}-dbtype`} value={e.dbType} onChange={(dbType) => upEnv(env.key, { dbType })} options={infra.db} />
+                      </Field>
+                      <Field label={`URL da app em ${env.short}`} htmlFor={`f-${env.key}-appurl`} className="sm:col-span-2">
+                        <Input id={`f-${env.key}-appurl`} type="url" inputMode="url" value={e.appUrl} onChange={(ev) => upEnv(env.key, { appUrl: ev.target.value })} placeholder="https://…" spellCheck={false} autoComplete="off" />
+                      </Field>
+                      <Field label="Projeto da BD" htmlFor={`f-${env.key}-dbproj`}>
+                        <Input id={`f-${env.key}-dbproj`} value={e.dbProject} onChange={(ev) => upEnv(env.key, { dbProject: ev.target.value })} placeholder="sogrape-ai-studio…" spellCheck={false} autoComplete="off" />
+                      </Field>
+                      <Field label="ID da base de dados" htmlFor={`f-${env.key}-dbid`}>
+                        <Input id={`f-${env.key}-dbid`} value={e.dbId} onChange={(ev) => upEnv(env.key, { dbId: ev.target.value })} className="font-mono text-[13px]" spellCheck={false} autoComplete="off" />
                       </Field>
                       <Field label="Notas" htmlFor={`f-${env.key}-notes`} className="sm:col-span-2">
                         <Textarea id={`f-${env.key}-notes`} value={e.notes} onChange={(ev) => upEnv(env.key, { notes: ev.target.value })} className="min-h-16" />
@@ -387,12 +613,25 @@ export function AppFormPage() {
             })}
           </Section>
 
-          <Section id="repositorio" title="Repositório" description="Opcional. Apps feitas no Google AI Studio podem não ter repositório: escolhe Google AI Studio como conta e deixa o URL vazio.">
-            <Field label="URL do repositório" htmlFor="f-repo" hint="Opcional.">
-              <Input id="f-repo" type="url" value={form.repo.url} onChange={(e) => { const url = e.target.value; const gh = url.match(/github\.com\/([^/\s]+)/i)?.[1]; up({ repo: { ...form.repo, url, owner: gh ?? form.repo.owner } }) }} placeholder="https://github.com/…" spellCheck={false} />
+          <Section id="repositorio" icon={GitBranch} title="Repositório" description="Opcional. Apps do Google AI Studio podem não ter repositório: escolhe Google AI Studio e deixa o URL vazio.">
+            <Field label="URL do repositório" htmlFor="f-repo">
+              <Input
+                id="f-repo"
+                type="url"
+                inputMode="url"
+                value={form.repo.url}
+                onChange={(e) => {
+                  const url = e.target.value
+                  const acc = accountFromUrl(url)
+                  up({ repo: { ...form.repo, url, account: acc ?? form.repo.account } })
+                }}
+                placeholder="https://github.com/…"
+                spellCheck={false}
+                autoComplete="off"
+              />
             </Field>
             <div className="flex flex-col gap-1.5">
-              <span className="font-display text-[12px] font-medium text-ink-subtle">Conta</span>
+              <span className="font-display text-[12.5px] font-medium text-ink-muted">Conta</span>
               <Segmented<RepoAccount>
                 label="Conta do repositório"
                 value={form.repo.account}
@@ -401,82 +640,79 @@ export function AppFormPage() {
                 className="w-fit"
               />
             </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field label="Dono no GitHub" htmlFor="f-owner-gh" hint="Preenchido a partir do URL do GitHub.">
-                <Input id="f-owner-gh" value={form.repo.owner} onChange={(e) => up({ repo: { ...form.repo, owner: e.target.value } })} placeholder="BrunoJusta" spellCheck={false} autoComplete="off" />
-              </Field>
-              <Field label="Branch principal" htmlFor="f-branch">
-                <Input id="f-branch" value={form.repo.branch} onChange={(e) => up({ repo: { ...form.repo, branch: e.target.value } })} className="font-mono text-[13px]" spellCheck={false} autoComplete="off" />
-              </Field>
-            </div>
           </Section>
 
-          <Section id="links" title="Links" description="Figma, Google AI Studio, documentação, manual, deck.">
+          <Section id="links" icon={LinkSimple} title="Links" description="Figma, Google AI Studio, documentação, manual, deck.">
             <Datalist id="link-labels" options={LINK_SUGGESTIONS} />
-            {form.links.map((l, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[180px_1fr]">
-                  <Input aria-label="Nome do link" list="link-labels" value={l.label} onChange={(e) => up({ links: form.links.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) })} placeholder="Figma" autoComplete="off" />
-                  <Input aria-label="URL do link" type="url" value={l.url} onChange={(e) => up({ links: form.links.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)) })} placeholder="https://" spellCheck={false} />
-                </div>
-                <IconButton label="Remover link" onClick={() => up({ links: form.links.filter((_, j) => j !== i) })} className="mt-0.5">
-                  <X size={14} aria-hidden />
-                </IconButton>
+            {form.links.length ? (
+              <div className="flex flex-col gap-2">
+                {form.links.map((l, i) => (
+                  <div key={i} className="enter flex items-start gap-2">
+                    <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[180px_1fr]">
+                      <Input aria-label={`Nome do link ${i + 1}`} list="link-labels" value={l.label} onChange={(e) => up({ links: form.links.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) })} placeholder="Figma…" autoComplete="off" />
+                      <Input aria-label={`URL do link ${i + 1}`} type="url" inputMode="url" value={l.url} onChange={(e) => up({ links: form.links.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)) })} placeholder="https://…" spellCheck={false} autoComplete="off" />
+                    </div>
+                    <IconButton label={`Remover link ${l.label || i + 1}`} onClick={() => up({ links: form.links.filter((_, j) => j !== i) })} className="mt-1">
+                      <X size={14} aria-hidden />
+                    </IconButton>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : null}
             <div>
-              <Button size="sm" variant="ghost" onClick={() => up({ links: [...form.links, { label: '', url: '' }] })}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  up({ links: [...form.links, { label: '', url: '' }] })
+                  window.setTimeout(() => document.querySelector<HTMLInputElement>(`[aria-label="Nome do link ${form.links.length + 1}"]`)?.focus(), 0)
+                }}
+              >
                 <Plus size={14} aria-hidden />
                 Adicionar link
               </Button>
             </div>
           </Section>
 
-          <Section id="governo" title="Governance">
-            <Field label="Product Owner" htmlFor="f-owner" hint="Quem responde pela app do lado do negócio.">
-              <PersonInput id="f-owner" value={form.owner} onChange={(p) => up({ owner: p })} />
-            </Field>
-            <Field label="AI Lead" htmlFor="f-ailead" hint="Quem lidera a parte de IA da app.">
-              <PersonInput id="f-ailead" value={form.aiLead} onChange={(p) => up({ aiLead: p })} />
-            </Field>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <Switch
-                  id="f-gdpr"
-                  checked={form.governance.personalData === 'sim'}
-                  onChange={(on) => up({ governance: { ...form.governance, personalData: on ? 'sim' : 'nao' } })}
-                  label="Trata dados pessoais (RGPD)"
-                  description={form.governance.personalData === 'por_avaliar' ? 'Ainda por avaliar. Liga ou desliga para registar.' : undefined}
-                />
-              </div>
-              <Field label="Classificação dos dados" htmlFor="f-class" className="sm:col-span-2">
-                <PillPicker<string>
-                  id="f-class"
-                  label="Classificação dos dados"
-                  value={form.governance.dataClassification}
-                  onChange={(v) => up({ governance: { ...form.governance, dataClassification: v === form.governance.dataClassification ? '' : v } })}
-                  options={[...new Set([...DATA_CLASSIFICATIONS, ...(form.governance.dataClassification ? [form.governance.dataClassification] : [])])].map((c) => ({ value: c, label: c }))}
-                />
-              </Field>
+          <Section id="governo" icon={ShieldCheck} title="Governance">
+            <div className="rounded-xl p-4 shadow-[inset_0_0_0_1px_var(--hairline)]">
+              <Switch
+                id="f-gdpr"
+                checked={form.governance.personalData === 'sim'}
+                onChange={(on) => up({ governance: { ...form.governance, personalData: on ? 'sim' : 'nao' } })}
+                label="Trata dados pessoais (RGPD)"
+                description={form.governance.personalData === 'por_avaliar' ? 'Ainda por avaliar. Liga ou desliga para registar.' : undefined}
+              />
             </div>
-            <Field label="Riscos" htmlFor="f-risks">
-              <Textarea id="f-risks" value={form.governance.risks} onChange={(e) => up({ governance: { ...form.governance, risks: e.target.value } })} className="min-h-20" />
+            <Field label="Classificação dos dados" htmlFor="f-class">
+              <PillPicker<string>
+                id="f-class"
+                label="Classificação dos dados"
+                value={form.governance.dataClassification}
+                onChange={(v) => up({ governance: { ...form.governance, dataClassification: v === form.governance.dataClassification ? '' : v } })}
+                options={[...new Set([...DATA_CLASSIFICATIONS, ...(form.governance.dataClassification ? [form.governance.dataClassification] : [])])].map((c) => ({ value: c, label: c }))}
+              />
             </Field>
-            <Field label="Notas" htmlFor="f-gnotes">
-              <Textarea id="f-gnotes" value={form.governance.notes} onChange={(e) => up({ governance: { ...form.governance, notes: e.target.value } })} className="min-h-20" />
+            <Field label="Observações" htmlFor="f-obs" hint="Riscos, dependências, decisões, o que for útil saber.">
+              <Textarea id="f-obs" value={form.governance.notes} onChange={(e) => up({ governance: { ...form.governance, notes: e.target.value } })} className="min-h-28" />
             </Field>
           </Section>
         </div>
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-[max(20px,env(safe-area-inset-bottom))] z-30 flex justify-center px-4">
-        <div className="enter pointer-events-auto flex items-center gap-3 rounded-full bg-surface-1 py-1.5 pr-1.5 pl-4 shadow-panel">
-          <span className="hidden font-display text-[13px] font-medium text-ink-subtle sm:inline">{dirty ? 'Alterações por guardar' : 'Sem alterações'}</span>
+        <div className="enter pointer-events-auto flex items-center gap-2 rounded-full bg-surface-1 py-1.5 pr-1.5 pl-1.5 shadow-panel">
+          {dirty ? (
+            <span className="hidden items-center gap-2 pr-1 pl-3 font-display text-[13px] font-medium text-ink-subtle sm:flex">
+              <span aria-hidden className="size-1.5 rounded-full bg-warning" />
+              Alterações por guardar
+            </span>
+          ) : null}
           <Button variant="ghost" onClick={() => navigate(backTo)}>
             Cancelar
           </Button>
           <Button type="submit" variant="primary" loading={saving}>
-            {isNew ? 'Criar app' : 'Guardar'}
+            {saving ? 'A guardar…' : isNew ? 'Criar app' : 'Guardar alterações'}
           </Button>
         </div>
       </div>
@@ -484,7 +720,10 @@ export function AppFormPage() {
       <ConfirmDialog
         open={blocker.state === 'blocked'}
         onClose={() => blocker.reset?.()}
-        onConfirm={() => blocker.proceed?.()}
+        onConfirm={() => {
+          writeDraft(key, null)
+          blocker.proceed?.()
+        }}
         title="Sair sem guardar?"
         body="Tens alterações nesta ficha que ainda não foram guardadas. Se saíres, perdes-as."
         confirmLabel="Sair sem guardar"
