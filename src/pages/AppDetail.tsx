@@ -404,7 +404,7 @@ export function AppDetailPage() {
                 onClick={() => setTab(t.key)}
                 className={clsx(
                   'relative h-11 shrink-0 px-3 font-display text-[13.5px] font-medium transition-colors duration-150 first:pl-0',
-                  tab === t.key ? 'text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ink first:after:left-0' : 'text-ink-subtle hover:text-ink',
+                  tab === t.key ? 'text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-accent first:after:left-0' : 'text-ink-subtle hover:text-ink',
                 )}
               >
                 <span className="flex items-center gap-1.5">

@@ -92,7 +92,7 @@ export function FilterChip({
       <div
         className={clsx(
           'flex h-[34px] items-center rounded-full font-display text-[13px] font-medium transition-[background-color,color,box-shadow] duration-150',
-          highlighted ? 'bg-ink text-canvas' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
+          highlighted ? 'bg-accent-soft text-ink shadow-[inset_0_0_0_1px_var(--accent-line)]' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
         )}
       >
         <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => {
@@ -103,20 +103,20 @@ export function FilterChip({
             }
             setOpen((o) => !o)
           }} className={clsx('flex h-full items-center gap-1.5 rounded-full pl-3 transition-transform active:scale-[0.97]', active && clearable ? 'pr-1.5' : 'pr-3')}>
-          <span aria-hidden className={highlighted ? 'text-canvas/70' : 'text-ink-subtle'}>
+          <span aria-hidden className={highlighted ? 'text-accent-text' : 'text-ink-subtle'}>
             {icon}
           </span>
-          <span className={active ? (highlighted ? 'text-canvas/70' : 'text-ink-subtle') : ''}>{label}</span>
+          <span className={active ? (highlighted ? 'text-accent-text' : 'text-ink-subtle') : ''}>{label}</span>
           {active ? (
-            <span className={clsx('flex max-w-40 items-center gap-1.5 truncate', highlighted ? 'text-canvas' : 'text-ink')}>
+            <span className={clsx('flex max-w-40 items-center gap-1.5 truncate', highlighted ? 'text-ink' : 'text-ink')}>
               {current?.color ? <Dot color={current.color} /> : null}
               {current?.label ?? value}
             </span>
           ) : null}
-          {!active || !clearable ? <CaretDown size={11} className={highlighted ? 'text-canvas/60' : 'text-ink-tertiary'} aria-hidden /> : null}
+          {!active || !clearable ? <CaretDown size={11} className={highlighted ? 'text-accent-text' : 'text-ink-tertiary'} aria-hidden /> : null}
         </button>
         {active && clearable ? (
-          <button type="button" onClick={() => onChange('')} aria-label={`Limpar ${label}`} className="mr-1.5 flex size-5 items-center justify-center rounded-full text-canvas/70 hover:bg-white/15 hover:text-canvas">
+          <button type="button" onClick={() => onChange('')} aria-label={`Limpar ${label}`} className="mr-1.5 flex size-6 items-center justify-center rounded-full text-accent-text hover:bg-white hover:text-ink">
             <X size={11} weight="bold" aria-hidden />
           </button>
         ) : null}
@@ -214,7 +214,7 @@ export function FiltersBar({ trailing }: { trailing?: ReactNode }) {
           onChange={(e) => set({ q: e.target.value })}
           placeholder="Filtrar apps…"
           aria-label="Filtrar apps por nome, pessoa ou stack"
-          className="h-[34px] w-full rounded-full bg-surface-1 pr-3 pl-8 text-[13px] text-ink shadow-ring placeholder:text-ink-tertiary transition-[box-shadow] duration-150 focus:shadow-[0_0_0_1px_var(--ink),0_0_0_4px_var(--accent-tint)] focus:outline-none focus-visible:outline-none"
+          className="h-[34px] w-full rounded-full bg-surface-1 pr-3 pl-8 text-[13px] text-ink shadow-ring placeholder:text-ink-tertiary transition-[box-shadow] duration-150 focus:shadow-[0_0_0_1px_var(--accent),0_0_0_4px_var(--accent-tint)] focus:outline-none focus-visible:outline-none"
           autoComplete="off"
         />
       </div>

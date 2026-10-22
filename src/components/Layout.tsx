@@ -25,7 +25,7 @@ function TopTab({ to, children, end, icon }: { to: string; children: ReactNode; 
       className={({ isActive }) =>
         clsx(
           'relative flex h-full shrink-0 items-center gap-1.5 px-3 font-display text-[13.5px] font-medium transition-colors duration-150',
-          isActive ? 'text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ink' : 'text-ink-subtle hover:text-ink',
+          isActive ? 'text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-accent' : 'text-ink-subtle hover:text-ink',
         )
       }
     >

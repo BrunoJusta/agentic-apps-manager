@@ -4,8 +4,9 @@
 @import "@fontsource-variable/geist-mono";
 
 /*
-  Linguagem do backoffice (inspirada no DESIGN.md da Vercel): tinta e cinzas, linhas finas,
-  sombras empilhadas. A única cor viva é a de cada entidade (fase, área), recebida por --c.
+  Linguagem do backoffice: superfícies brancas, tinta ardósia #4C4F69 e um único acento azul-céu
+  #39C2EF para o que está ativo, selecionado ou em foco. As fases e áreas mantêm a sua cor, recebida por --c.
+  Botões principais são ardósia (branco sobre #39C2EF não tem contraste suficiente para texto).
   Raios: 6 (checkbox, kbd), 8 (inputs, itens de menu), 12 (fieldsets, caixas internas),
   14 (cartões, tabelas), 16 (modais), 999 (tudo o que se clica).
 */
@@ -15,22 +16,26 @@
   --f-ui: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --canvas: #fafafa;
+  --canvas: #f7f7f9;
   --surface-1: #ffffff;
-  --surface-2: #f5f5f5;
-  --surface-3: #ebebeb;
-  --hairline: #ebebeb;
-  --hairline-strong: #d4d4d4;
-  --ink: #171717;
-  --ink-muted: #4d4d4d;
-  --ink-subtle: #6f6f6f;
-  --ink-tertiary: #8f8f8f;
-  --accent: #171717;
-  --accent-hover: #383838;
+  --surface-2: #f2f2f6;
+  --surface-3: #e8e8ef;
+  --hairline: #e7e7ee;
+  --hairline-strong: #d3d4de;
+  --ink: #4c4f69;
+  --ink-hover: #3c3f56;
+  --ink-muted: #5c5f7a;
+  --ink-subtle: #6e7189;
+  --ink-tertiary: #9799ad;
+  --accent: #39c2ef;
+  --accent-hover: #1fb2e3;
+  --accent-text: #0a7ca6;
   --on-accent: #ffffff;
-  --accent-tint: rgba(23, 23, 23, 0.06);
-  --sel: rgba(23, 23, 23, 0.04);
-  --scrim: rgba(23, 23, 23, 0.28);
+  --accent-tint: rgba(57, 194, 239, 0.22);
+  --accent-soft: #e5f6fd;
+  --accent-line: rgba(57, 194, 239, 0.55);
+  --sel: rgba(76, 79, 105, 0.05);
+  --scrim: rgba(40, 42, 58, 0.32);
   --success: #1a7f37;
   --success-tint: rgba(26, 127, 55, 0.09);
   --danger: #d93036;
@@ -38,10 +43,10 @@
   --warn: #ab570a;
   --warn-tint: #fff4de;
 
-  --ring: 0 0 0 1px rgba(0, 0, 0, 0.08);
-  --e2: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 1px 1px rgba(0, 0, 0, 0.02), 0 2px 2px rgba(0, 0, 0, 0.04);
-  --e4: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 2px rgba(0, 0, 0, 0.04), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
-  --shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.02), 0 8px 16px -4px rgba(0, 0, 0, 0.06), 0 24px 32px -8px rgba(0, 0, 0, 0.08);
+  --ring: 0 0 0 1px rgba(76, 79, 105, 0.12);
+  --e2: 0 0 0 1px rgba(76, 79, 105, 0.1), 0 1px 1px rgba(76, 79, 105, 0.03), 0 2px 4px rgba(76, 79, 105, 0.05);
+  --e4: 0 0 0 1px rgba(76, 79, 105, 0.11), 0 2px 2px rgba(76, 79, 105, 0.04), 0 10px 20px -6px rgba(76, 79, 105, 0.14);
+  --shadow: 0 0 0 1px rgba(76, 79, 105, 0.1), 0 1px 1px rgba(76, 79, 105, 0.03), 0 8px 16px -4px rgba(76, 79, 105, 0.1), 0 24px 40px -10px rgba(76, 79, 105, 0.16);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --gutter: 24px;
 }
@@ -69,13 +74,15 @@
   --color-hairline: var(--hairline);
   --color-hairline-strong: var(--hairline-strong);
   --color-ink: var(--ink);
+  --color-ink-hover: var(--ink-hover);
   --color-ink-muted: var(--ink-muted);
   --color-ink-subtle: var(--ink-subtle);
   --color-ink-tertiary: var(--ink-tertiary);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
-  --color-accent-text: var(--ink);
-  --color-accent-soft: var(--accent-tint);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
   --color-on-accent: var(--on-accent);
   --color-sel: var(--sel);
   --color-success: var(--success);
@@ -129,12 +136,12 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--ink);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
   ::selection {
-    background: rgba(23, 23, 23, 0.12);
+    background: rgba(57, 194, 239, 0.25);
   }
 
   dialog::backdrop {
@@ -148,7 +155,7 @@
   input[type="checkbox"],
   input[type="radio"],
   input[type="range"] {
-    accent-color: var(--ink);
+    accent-color: var(--accent);
   }
 
   code,
@@ -330,8 +337,9 @@ a.card:hover,
 }
 .seg button[aria-pressed="true"],
 .seg button[aria-checked="true"] {
-  background: var(--ink);
-  color: var(--canvas);
+  background: var(--accent-soft);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
 }
 .seg .sc {
   padding: 1px 6px;
@@ -343,8 +351,8 @@ a.card:hover,
 }
 .seg button[aria-pressed="true"] .sc,
 .seg button[aria-checked="true"] .sc {
-  background: rgba(255, 255, 255, 0.18);
-  color: var(--canvas);
+  background: #fff;
+  color: var(--accent-text);
 }
 
 /* Caixas de informação. */
@@ -466,8 +474,8 @@ a.card:hover,
   box-shadow: var(--shadow);
 }
 .drop-glow {
-  background: var(--accent-tint);
-  box-shadow: inset 0 0 0 1px rgba(23, 23, 23, 0.18);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1.5px var(--accent-line);
 }
 
 /* View Transitions: o cartão desliza para a coluna nova. */
@@ -508,21 +516,20 @@ a.card:hover,
 }
 
 /* ---------- Fundo animado do login ---------- */
-/* Grelha de pontos que se dissolve nas margens e três manchas nas cores da Sogrape
-   (ferrugem, vinho e oliva) a derivar devagar. */
+/* Grelha de pontos que se dissolve nas margens e três manchas em azul-céu e ardósia a derivar devagar. */
 .login-bg {
   position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(160deg, color-mix(in srgb, #b15533 6%, var(--canvas)), var(--canvas) 45%, color-mix(in srgb, #7a2338 5%, var(--canvas)));
+  background: linear-gradient(160deg, color-mix(in srgb, #39c2ef 9%, #fff), #fff 48%, color-mix(in srgb, #4c4f69 6%, #fff));
 }
 .login-bg::before {
   content: "";
   position: absolute;
   inset: -24px;
-  background-image: radial-gradient(rgba(23, 23, 23, 0.11) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(76, 79, 105, 0.16) 1px, transparent 1px);
   background-size: 24px 24px;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 75%);
   mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 75%);
@@ -537,19 +544,19 @@ a.card:hover,
 .login-blob.b1 {
   top: -14vmax;
   left: -10vmax;
-  background: radial-gradient(circle, rgba(177, 85, 51, 0.32), transparent 62%);
+  background: radial-gradient(circle, rgba(57, 194, 239, 0.34), transparent 62%);
 }
 .login-blob.b2 {
   bottom: -18vmax;
   right: -12vmax;
-  background: radial-gradient(circle, rgba(122, 35, 56, 0.24), transparent 62%);
+  background: radial-gradient(circle, rgba(76, 79, 105, 0.2), transparent 62%);
 }
 .login-blob.b3 {
   top: 8vmax;
   right: -16vmax;
   width: 38vmax;
   height: 38vmax;
-  background: radial-gradient(circle, rgba(111, 122, 58, 0.2), transparent 62%);
+  background: radial-gradient(circle, rgba(57, 194, 239, 0.2), transparent 62%);
 }
 @media (prefers-reduced-motion: no-preference) {
   .login-bg::before {

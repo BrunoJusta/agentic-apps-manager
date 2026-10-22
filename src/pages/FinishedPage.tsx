@@ -48,7 +48,7 @@ export function FinishedPage() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="Filtrar apps…"
               aria-label="Filtrar apps do Production Portfolio"
-              className="h-[34px] w-full rounded-full bg-surface-1 pr-3 pl-8 text-[13px] text-ink shadow-ring placeholder:text-ink-tertiary focus:shadow-[0_0_0_1px_var(--ink),0_0_0_4px_var(--accent-tint)] focus:outline-none focus-visible:outline-none"
+              className="h-[34px] w-full rounded-full bg-surface-1 pr-3 pl-8 text-[13px] text-ink shadow-ring placeholder:text-ink-tertiary focus:shadow-[0_0_0_1px_var(--accent),0_0_0_4px_var(--accent-tint)] focus:outline-none focus-visible:outline-none"
               autoComplete="off"
             />
           </div>

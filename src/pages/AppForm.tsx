@@ -391,7 +391,7 @@ export function AppFormPage() {
             aria-current={activeSection === s.id ? 'true' : undefined}
             className={clsx(
               'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-display text-[13px] font-medium transition-colors',
-              activeSection === s.id ? 'bg-ink text-canvas' : 'bg-surface-1 text-ink-muted shadow-ring',
+              activeSection === s.id ? 'bg-accent-soft text-ink shadow-[inset_0_0_0_1px_var(--accent-line)]' : 'bg-surface-1 text-ink-muted shadow-ring',
             )}
           >
             <s.icon size={14} aria-hidden />

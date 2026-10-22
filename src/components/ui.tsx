@@ -32,7 +32,7 @@ export function Button({
         size === 'sm' && 'h-[30px] px-3 text-[13px]',
         size === 'md' && 'h-[34px] px-3.5 text-[13.5px]',
         size === 'lg' && 'h-10 px-[18px] text-[13.5px]',
-        variant === 'primary' && 'bg-ink text-canvas hover:bg-accent-hover',
+        variant === 'primary' && 'bg-ink text-white hover:bg-ink-hover',
         variant === 'secondary' && 'bg-surface-1 text-ink shadow-ring hover:bg-surface-2',
         variant === 'ghost' && 'text-ink-subtle hover:bg-sel hover:text-ink',
         variant === 'danger' && 'bg-danger text-white hover:brightness-95',
@@ -99,7 +99,7 @@ export function Segmented<T extends string>({
 /* ---------- Campos ---------- */
 
 const inputBase =
-  'w-full min-w-0 rounded-lg border border-hairline bg-surface-1 px-3 text-sm text-ink placeholder:text-ink-tertiary transition-[border-color,box-shadow] duration-150 hover:border-hairline-strong focus:border-ink focus:shadow-[0_0_0_3px_var(--accent-tint)] focus:outline-none focus-visible:outline-none disabled:opacity-55 aria-[invalid=true]:border-danger'
+  'w-full min-w-0 rounded-lg border border-hairline bg-surface-1 px-3 text-sm text-ink placeholder:text-ink-tertiary transition-[border-color,box-shadow] duration-150 hover:border-hairline-strong focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-tint)] focus:outline-none focus-visible:outline-none disabled:opacity-55 aria-[invalid=true]:border-danger'
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={clsx(inputBase, 'min-h-[38px]', className)} {...rest} />
@@ -175,7 +175,7 @@ export function TagInput({ id, value, onChange, suggestions = [], placeholder }:
     setDraft('')
   }
   return (
-    <div className={clsx(inputBase, 'flex min-h-[38px] flex-wrap items-center gap-1.5 px-1.5 py-1.5 focus-within:border-ink focus-within:shadow-[0_0_0_3px_var(--accent-tint)]')}>
+    <div className={clsx(inputBase, 'flex min-h-[38px] flex-wrap items-center gap-1.5 px-1.5 py-1.5 focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--accent-tint)]')}>
       {value.map((t) => (
         <span key={t} className="tg py-1 pr-1">
           {t}

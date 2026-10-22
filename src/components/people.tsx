@@ -33,7 +33,7 @@ export function useEditorsDirectory() {
 }
 
 const boxBase =
-  'w-full min-w-0 rounded-lg border border-hairline bg-surface-1 text-sm text-ink transition-[border-color,box-shadow] duration-150 hover:border-hairline-strong focus-within:border-ink focus-within:shadow-[0_0_0_3px_var(--accent-tint)]'
+  'w-full min-w-0 rounded-lg border border-hairline bg-surface-1 text-sm text-ink transition-[border-color,box-shadow] duration-150 hover:border-hairline-strong focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--accent-tint)]'
 
 const norm = (s: string) =>
   s

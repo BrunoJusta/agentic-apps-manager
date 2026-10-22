@@ -57,7 +57,7 @@ export function PillPicker<T extends string>({
             onKeyDown={(e) => onKeyDown(e, i)}
             className={clsx(
               'inline-flex h-[34px] items-center gap-1.5 rounded-full px-3.5 font-display text-[13px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.97]',
-              on ? 'bg-ink text-canvas shadow-[0_1px_2px_rgba(0,0,0,0.12)]' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
+              on ? 'bg-accent-soft text-ink shadow-[inset_0_0_0_1px_var(--accent-line)]' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
             )}
           >
             {o.label}
@@ -85,7 +85,7 @@ export function Switch({ id, checked, onChange, label, description }: { id: stri
         onClick={() => onChange(!checked)}
         className={clsx(
           'relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200',
-          checked ? 'bg-ink' : 'bg-surface-3 shadow-[inset_0_0_0_1px_var(--hairline-strong)]',
+          checked ? 'bg-accent' : 'bg-surface-3 shadow-[inset_0_0_0_1px_var(--hairline-strong)]',
         )}
       >
         <span aria-hidden className={clsx('inline-block size-[18px] rounded-full bg-white shadow-e2 transition-transform duration-200', checked ? 'translate-x-[19px]' : 'translate-x-[3px]')} />
@@ -197,7 +197,7 @@ function useComboKeys(options: string[], query: string, open: boolean, setOpen: 
 }
 
 const boxBase =
-  'w-full min-w-0 rounded-lg border border-hairline bg-surface-1 text-sm text-ink transition-[border-color,box-shadow] duration-150 hover:border-hairline-strong focus-within:border-ink focus-within:shadow-[0_0_0_3px_var(--accent-tint)]'
+  'w-full min-w-0 rounded-lg border border-hairline bg-surface-1 text-sm text-ink transition-[border-color,box-shadow] duration-150 hover:border-hairline-strong focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--accent-tint)]'
 
 /** Escolha única com pesquisa. Se o texto não existir, oferece "Adicionar". */
 export function Combobox({ id, value, onChange, options, placeholder = 'Procurar ou adicionar…' }: { id: string; value: string; onChange: (v: string) => void; options: string[]; placeholder?: string }) {
