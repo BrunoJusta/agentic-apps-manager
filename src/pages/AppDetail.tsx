@@ -120,8 +120,9 @@ function EnvUrls({ app }: { app: AgenticApp }) {
   return (
     <Panel className="p-5">
       <PanelTitle icon={Globe}>URLs da app</PanelTitle>
+      {!ENVS.some((e) => app.environments[e.key].enabled) ? <p className="mt-2 text-sm text-ink-tertiary">Ainda sem ambientes definidos.</p> : null}
       <ul className="mt-2 divide-y divide-hairline">
-        {ENVS.map((e) => {
+        {ENVS.filter((e) => app.environments[e.key].enabled).map((e) => {
           const env = app.environments[e.key]
           return (
             <li key={e.key} className="flex min-w-0 items-center gap-3 py-2.5">
@@ -145,7 +146,7 @@ function EnvUrls({ app }: { app: AgenticApp }) {
                   </a>
                 </>
               ) : (
-                <span className="flex-1 text-sm text-ink-tertiary">{env.enabled ? 'Por definir' : 'Este ambiente não existe'}</span>
+                <span className="flex-1 text-sm text-ink-tertiary">Por definir</span>
               )}
             </li>
           )
