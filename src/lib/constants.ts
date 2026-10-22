@@ -120,6 +120,7 @@ export function emptyApp(): AppInput {
     status: 'ideia',
     maturity: 'poc',
     owner: { name: '', email: '' },
+    aiLead: { name: '', email: '' },
     startDate: '',
     goLiveDate: '',
     stack: { frontend: [], backend: [], llm: [], frameworks: [], auth: '' },

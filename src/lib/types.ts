@@ -59,6 +59,8 @@ export interface AgenticApp {
   maturity: MaturityKey
   /** Responsável pela app. */
   owner: Person
+  /** AI Lead da app. */
+  aiLead: Person
   startDate: string
   goLiveDate: string
   /** Antigo: já não se edita nem se mostra. */

@@ -308,7 +308,7 @@ export function AppFormPage() {
             </Field>
           </Section>
 
-          <Section id="estado" title="Estado" description="Production exige owner e ambiente de produção preenchidos. O repositório é opcional.">
+          <Section id="estado" title="Estado" description="Production exige Product Owner e ambiente de produção preenchidos. O repositório é opcional.">
             <Field label="Estado" htmlFor="f-status">
               <PillPicker<StatusKey> id="f-status" label="Estado" value={form.status} onChange={(status) => up({ status })} options={STATUSES.map((s) => ({ value: s.key, label: s.label, title: s.hint }))} />
             </Field>
@@ -434,8 +434,11 @@ export function AppFormPage() {
           </Section>
 
           <Section id="governo" title="Governance">
-            <Field label="Owner" htmlFor="f-owner" hint="Quem responde pela app.">
+            <Field label="Product Owner" htmlFor="f-owner" hint="Quem responde pela app do lado do negócio.">
               <PersonInput id="f-owner" value={form.owner} onChange={(p) => up({ owner: p })} />
+            </Field>
+            <Field label="AI Lead" htmlFor="f-ailead" hint="Quem lidera a parte de IA da app.">
+              <PersonInput id="f-ailead" value={form.aiLead} onChange={(p) => up({ aiLead: p })} />
             </Field>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">

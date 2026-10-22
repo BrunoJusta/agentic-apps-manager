@@ -9,9 +9,9 @@ const asPerson = (p: unknown): Person => {
   const o = (p ?? {}) as Partial<Person>
   return { name: String(o.name ?? ''), email: String(o.email ?? '') }
 }
-/** Owner da app. Fichas antigas tinham dono de negócio e AI Lead: usa o primeiro preenchido. */
+/** Product Owner da app. Fichas antigas tinham dono de negócio: usa-o se o owner estiver vazio. */
 function ownerOf(raw: Record<string, unknown>): Person {
-  for (const k of ['owner', 'businessOwner', 'aiLead']) {
+  for (const k of ['owner', 'businessOwner']) {
     const p = asPerson(raw[k])
     if (p.name.trim() || p.email.trim()) return p
   }
@@ -23,7 +23,7 @@ const asStrings = (v: unknown): string[] => (Array.isArray(v) ? v.map(String).fi
 export function normalizeApp(id: string, raw: Record<string, unknown>): AgenticApp {
   const base = emptyApp()
   // remove campos antigos (equipa detalhada e contacto de IT deixaram de existir)
-  const { businessOwner: _bo, aiLead: _al, developers: _dv, supportL1: _s1, supportL2: _s2, itContact: _it, ...rest } = raw
+  const { businessOwner: _bo, developers: _dv, supportL1: _s1, supportL2: _s2, itContact: _it, ...rest } = raw
   const r = rest as Partial<AgenticApp>
   const envs = {} as AgenticApp['environments']
   for (const k of ENV_KEYS) {
@@ -44,6 +44,7 @@ export function normalizeApp(id: string, raw: Record<string, unknown>): AgenticA
     status: (r.status as string) === 'manutencao' ? 'producao' : STATUS_KEYS.includes(r.status as never) ? (r.status as AgenticApp['status']) : 'ideia',
     icon: typeof r.icon === 'string' && r.icon.startsWith('data:image/') ? r.icon : '',
     owner: ownerOf(raw),
+    aiLead: asPerson(raw.aiLead),
     activeUsers: typeof r.activeUsers === 'number' ? r.activeUsers : null,
     stack: {
       frontend: asStrings(r.stack?.frontend),
@@ -82,7 +83,7 @@ const filled = (s: string | undefined | null) => !!s && s.trim().length > 0
 export function productionReadiness(app: Pick<AgenticApp, 'owner' | 'environments'>) {
   const prod = app.environments.prod
   const items = [
-    { ok: filled(app.owner.name), label: 'Owner definido' },
+    { ok: filled(app.owner.name), label: 'Product Owner definido' },
     { ok: prod.enabled, label: 'Ambiente de produção ativo' },
     { ok: prod.enabled && filled(prod.hosting), label: 'Alojamento de produção' },
     { ok: prod.enabled && filled(prod.appUrl), label: 'URL da app em produção' },
@@ -100,7 +101,8 @@ const FIELD_LABELS: Record<string, string> = {
   priority: 'prioridade',
   status: 'estado',
   maturity: 'maturidade',
-  owner: 'owner',
+  owner: 'Product Owner',
+  aiLead: 'AI Lead',
   startDate: 'data de início',
   goLiveDate: 'data de go-live',
   activeUsers: 'utilizadores ativos',
@@ -128,6 +130,7 @@ export function matchesSearch(app: AgenticApp, q: string): boolean {
     app.shortDescription,
     app.area,
     app.owner.name,
+    app.aiLead.name,
     ...allTags(app),
     app.repo.url,
   ]
@@ -147,7 +150,7 @@ export function personMatches(p: Person, email: string) {
 }
 
 export function isMember(app: AgenticApp, email: string) {
-  return personMatches(app.owner, email)
+  return personMatches(app.owner, email) || personMatches(app.aiLead, email)
 }
 
 /** Dias até uma data ISO (yyyy-mm-dd). Negativo se já passou. */

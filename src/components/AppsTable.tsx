@@ -69,7 +69,7 @@ export function AppsTable({ apps, empty }: { apps: AgenticApp[]; empty?: React.R
                   <Th sort={sort} setSort={setSort} k="status">Estado</Th>
                   <Th sort={sort} setSort={setSort} k="maturity">Maturidade</Th>
                   <Th sort={sort} setSort={setSort} k="priority">Prioridade</Th>
-                  <Th sort={sort} setSort={setSort} k="owner">Owner</Th>
+                  <Th sort={sort} setSort={setSort} k="owner">Product Owner</Th>
                   <th scope="col" className="px-3.5 py-2.5 text-left font-display font-medium text-ink-subtle">
                     Ambientes
                   </th>

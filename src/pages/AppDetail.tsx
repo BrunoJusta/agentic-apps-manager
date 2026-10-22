@@ -22,6 +22,8 @@ import {
   TextAlignLeft,
   Trash,
   UserCircle,
+  UsersThree,
+  Robot,
   Tag,
   Warning,
   Note,
@@ -196,7 +198,8 @@ function Overview({ app }: { app: AgenticApp }) {
           <Fact icon={Buildings} label="Área">{app.area}</Fact>
           <Fact icon={CalendarBlank} label="Início">{fmtDate(app.startDate)}</Fact>
           <Fact icon={RocketLaunch} label="Go-live">{fmtDate(app.goLiveDate)}</Fact>
-          <Fact icon={UserCircle} label="Owner">{app.owner.name}</Fact>
+          <Fact icon={UserCircle} label="Product Owner">{app.owner.name}</Fact>
+          <Fact icon={Robot} label="AI Lead">{app.aiLead.name}</Fact>
           <Fact icon={GithubLogo} label="Repositório">{app.repo.account ? repoAccountLabel(app.repo.account) : ''}</Fact>
         </dl>
         {app.repo.url ? (
@@ -216,9 +219,22 @@ function Governance({ app }: { app: AgenticApp }) {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <Panel className="p-5 lg:col-span-2">
-        <PanelTitle icon={UserCircle}>Owner</PanelTitle>
-        <div className="mt-3">
-          <PersonLine p={app.owner} />
+        <PanelTitle icon={UsersThree}>Responsáveis</PanelTitle>
+        <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <p className="mb-2 flex items-center gap-1.5 text-[12px] text-ink-subtle">
+              <UserCircle size={14} aria-hidden />
+              Product Owner
+            </p>
+            <PersonLine p={app.owner} />
+          </div>
+          <div>
+            <p className="mb-2 flex items-center gap-1.5 text-[12px] text-ink-subtle">
+              <Robot size={14} aria-hidden />
+              AI Lead
+            </p>
+            <PersonLine p={app.aiLead} />
+          </div>
         </div>
       </Panel>
       <Panel className="p-5">

@@ -96,7 +96,7 @@ export async function createApp(input: AppInput, actor: Actor): Promise<string> 
 }
 
 /** Campos que deixaram de existir; são apagados quando a ficha é gravada. */
-const LEGACY_FIELDS = ['businessOwner', 'aiLead', 'developers', 'supportL1', 'supportL2', 'itContact']
+const LEGACY_FIELDS = ['businessOwner', 'developers', 'supportL1', 'supportL2', 'itContact']
 
 export async function updateApp(id: string, before: AppInput, after: AppInput, actor: Actor) {
   const fields = changedFields(before, after)
