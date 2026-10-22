@@ -103,19 +103,19 @@ export function Layout() {
   const tabs = (
     <>
       <TopTab to="/" end icon={<Kanban size={15} />}>
-        Lifecycle Management
+        Lifecycle
       </TopTab>
       <TopTab to="/production-portfolio" icon={<Briefcase size={15} />}>
         Production Portfolio
       </TopTab>
       {canEdit ? (
         <TopTab to="/credentials-vault" icon={<LockKey size={15} />}>
-          Credentials Vault
+          Vault
         </TopTab>
       ) : null}
       {isAdmin ? (
         <TopTab to="/access-control" icon={<Users size={15} />}>
-          Access Control
+          Access
         </TopTab>
       ) : null}
     </>
