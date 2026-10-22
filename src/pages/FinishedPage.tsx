@@ -38,7 +38,7 @@ export function FinishedPage() {
 
   return (
     <>
-      <PageHeader title="Production Portfolio" description="Apps que já saíram do pipeline: em Production ou Shelved. Pedidos de alteração, updates e novos módulos registam-se no separador Pedidos de cada app.">
+      <PageHeader title="Production Portfolio" description="Apps que já saíram do pipeline: em Production ou Shelved.">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-60">
             <MagnifyingGlass size={14} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-tertiary" aria-hidden />
