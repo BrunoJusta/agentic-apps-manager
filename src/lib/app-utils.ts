@@ -145,14 +145,6 @@ export function sortForBoard(a: AgenticApp, b: AgenticApp) {
   return priorityRank(a.priority) - priorityRank(b.priority) || a.name.localeCompare(b.name, 'pt')
 }
 
-export function personMatches(p: Person, email: string) {
-  return !!email && p.email.trim().toLowerCase() === email
-}
-
-export function isMember(app: AgenticApp, email: string) {
-  return personMatches(app.owner, email) || personMatches(app.aiLead, email)
-}
-
 /** Dias até uma data ISO (yyyy-mm-dd). Negativo se já passou. */
 export function daysUntil(iso: string, now = new Date()): number | null {
   if (!iso) return null

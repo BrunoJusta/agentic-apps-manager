@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { CaretDown, Check, Funnel, GithubLogo, Gauge, MagnifyingGlass, SquaresFour, Stack, User, Warning, X } from '@phosphor-icons/react'
+import { CaretDown, Check, Funnel, GithubLogo, Gauge, MagnifyingGlass, SquaresFour, Stack, Warning, X } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { allTags } from '../lib/app-utils'
 import { Dot } from './ui'
@@ -202,7 +202,7 @@ export function FiltersBar({ trailing }: { trailing?: ReactNode }) {
   const { filters: f, set, active, clear } = useFilters()
   const { apps } = useApps()
   const tags = useMemo(() => [...new Set(apps.flatMap(allTags))].sort((a, b) => a.localeCompare(b, 'pt')), [apps])
-  const count = [f.maturity, f.priority, f.account, f.tag, f.mine ? '1' : ''].filter(Boolean).length
+  const count = [f.maturity, f.priority, f.account, f.tag].filter(Boolean).length
 
   return (
     <div className="flex flex-wrap items-center gap-2 2xl:flex-nowrap">
@@ -232,19 +232,6 @@ export function FiltersBar({ trailing }: { trailing?: ReactNode }) {
         onChange={(v) => set({ account: v as never })}
       />
       {tags.length ? <FilterChip icon={<Stack size={14} />} label="Stack" value={f.tag} allLabel="Toda a stack" options={tags.map((t) => ({ value: t, label: t }))} onChange={(v) => set({ tag: v })} searchable /> : null}
-
-      <button
-        type="button"
-        aria-pressed={f.mine}
-        onClick={() => set({ mine: !f.mine })}
-        className={clsx(
-          'flex h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3 font-display text-[13px] font-medium whitespace-nowrap transition-[background-color,color] duration-150 active:scale-[0.97]',
-          f.mine ? 'bg-ink text-canvas' : 'bg-surface-1 text-ink-muted shadow-ring hover:bg-surface-2 hover:text-ink',
-        )}
-      >
-        <User size={14} className={f.mine ? 'text-canvas/70' : 'text-ink-subtle'} aria-hidden />
-        As minhas
-      </button>
 
       {active ? (
         <button type="button" onClick={clear} className="flex h-[30px] shrink-0 items-center gap-1 rounded-full px-2.5 font-display text-[12.5px] font-medium whitespace-nowrap text-ink-subtle transition-colors hover:bg-sel hover:text-ink">

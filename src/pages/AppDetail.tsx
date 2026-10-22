@@ -22,7 +22,6 @@ import {
   TextAlignLeft,
   Trash,
   UserCircle,
-  UsersThree,
   Robot,
   Tag,
   Warning,
@@ -219,8 +218,7 @@ function Governance({ app }: { app: AgenticApp }) {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <Panel className="p-5 lg:col-span-2">
-        <PanelTitle icon={UsersThree}>Responsáveis</PanelTitle>
-        <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-[12px] text-ink-subtle">
               <UserCircle size={14} aria-hidden />

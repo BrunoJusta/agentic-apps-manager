@@ -111,7 +111,7 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-[18px] font-semibold tracking-[-0.02em] text-ink">{title}</h2>
-          <div className="mt-1 max-w-[65ch] text-sm text-ink-muted">{body}</div>
+          {body ? <div className="mt-1 max-w-[65ch] text-sm text-ink-muted">{body}</div> : null}
           {children ? <div className="mt-5 max-w-md">{children}</div> : null}
         </div>
       </div>
@@ -175,7 +175,7 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
         'warning',
       )
     case 'locked':
-      return shell(<LockKey size={20} />, 'Credentials Vault bloqueado', 'Escreve a tua passphrase pessoal para veres, copiares e criares variáveis e secrets nesta sessão.', <UnlockForm onDone={() => toast('Credentials Vault aberto.')} />)
+      return shell(<LockKey size={20} />, 'Credentials Vault bloqueado', null, <UnlockForm onDone={() => toast('Credentials Vault aberto.')} />)
     case 'unlocked':
       return shell(
         <UnlockBurst />,

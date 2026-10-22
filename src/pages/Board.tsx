@@ -117,7 +117,7 @@ function DroppableColumn({ col, count, droppable, children, onAdd }: { col: Colu
 
 export function AppsPage() {
   const { apps, loading, error } = useApps()
-  const { canEdit, email, actor } = useAuth()
+  const { canEdit, actor } = useAuth()
   const { itemsById } = useVault()
   const { filters, set, active: filtering, clear } = useFilters()
   const toast = useToast()
@@ -168,8 +168,8 @@ export function AppsPage() {
 
   const visible = useMemo(() => {
     const withOverride = activeApps.map((a) => (override[a.id] && field ? { ...a, [field]: override[a.id] } : a))
-    return applyFilters(withOverride, filters, email).sort(sortForBoard)
-  }, [activeApps, override, field, filters, email])
+    return applyFilters(withOverride, filters).sort(sortForBoard)
+  }, [activeApps, override, field, filters])
 
   const columns: Column[] = useMemo(() => {
     if (group === 'maturity') return MATURITIES.map((m) => ({ key: m.key, label: m.label }))

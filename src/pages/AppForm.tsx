@@ -124,7 +124,6 @@ export function AppFormPage() {
       const base = emptyApp()
       const st = params.get('estado') as StatusKey | null
       if (st && STATUSES.some((s) => s.key === st) && st !== 'producao') base.status = st
-      base.owner = { name: actor.name, email: actor.email }
       return base
     }
     return existing ? toInput(existing) : null
