@@ -506,3 +506,65 @@ a.card:hover,
 }
 
 }
+
+/* ---------- Fundo animado do login ---------- */
+/* Grelha de pontos que se dissolve nas margens e duas manchas suaves a derivar devagar. */
+.login-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.login-bg::before {
+  content: "";
+  position: absolute;
+  inset: -24px;
+  background-image: radial-gradient(rgba(23, 23, 23, 0.11) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 75%);
+}
+.login-blob {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+.login-blob.b1 {
+  top: -14vmax;
+  left: -10vmax;
+  background: radial-gradient(circle, rgba(177, 85, 51, 0.1), transparent 65%);
+}
+.login-blob.b2 {
+  bottom: -18vmax;
+  right: -12vmax;
+  background: radial-gradient(circle, rgba(23, 23, 23, 0.06), transparent 65%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .login-bg::before {
+    animation: login-grid 18s linear infinite;
+  }
+  .login-blob.b1 {
+    animation: login-drift-a 26s ease-in-out infinite alternate;
+  }
+  .login-blob.b2 {
+    animation: login-drift-b 32s ease-in-out infinite alternate;
+  }
+}
+@keyframes login-grid {
+  to {
+    transform: translate(24px, 24px);
+  }
+}
+@keyframes login-drift-a {
+  to {
+    transform: translate(18vw, 14vh) scale(1.15);
+  }
+}
+@keyframes login-drift-b {
+  to {
+    transform: translate(-16vw, -12vh) scale(0.9);
+  }
+}
