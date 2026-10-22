@@ -9,7 +9,7 @@ export interface ItemUse {
   env: EnvKey
 }
 
-/** Itens do cofre ligados a uma app (opcionalmente só num ambiente). Ids de itens apagados são ignorados. */
+/** Itens do Credentials Vault ligados a uma app (opcionalmente só num ambiente). Ids de itens apagados são ignorados. */
 export function linkedItems(app: AgenticApp, byId: Map<string, VaultItem>, env?: EnvKey): { env: EnvKey; item: VaultItem }[] {
   const out: { env: EnvKey; item: VaultItem }[] = []
   for (const k of env ? [env] : ENV_KEYS) {

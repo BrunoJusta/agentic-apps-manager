@@ -35,9 +35,9 @@ export interface Environment {
   hosting: string
   appUrl: string
   notes: string
-  /** Itens do cofre ligados a este ambiente (ids de vaultItems). A app só guarda a referência. */
+  /** Itens do Credentials Vault ligados a este ambiente (ids de vaultItems). A app só guarda a referência. */
   vaultRefs: string[]
-  /** Antigo: variáveis em texto simples. Só existe até serem migradas para o cofre. */
+  /** Antigo: variáveis em texto simples. Só existe até serem migradas para o Credentials Vault. */
   variables: Variable[]
 }
 
@@ -61,7 +61,8 @@ export interface AgenticApp {
   owner: Person
   startDate: string
   goLiveDate: string
-  activeUsers: number | null
+  /** Antigo: já não se edita nem se mostra. */
+  activeUsers?: number | null
   stack: {
     frontend: string[]
     backend: string[]
@@ -137,7 +138,7 @@ export type SecretType = 'api_key' | 'password' | 'connection_string' | 'service
 export type VaultItemKind = 'variable' | 'secret'
 
 /**
- * Item do cofre (variável ou secret). Vive em vaultItems/{id}, com o valor sempre cifrado.
+ * Item do Credentials Vault (variável ou secret). Vive em vaultItems/{id}, com o valor sempre cifrado.
  * As apps só guardam o id em environments.{env}.vaultRefs; na ficha vê-se o nome, nunca o valor.
  */
 export interface VaultItem {

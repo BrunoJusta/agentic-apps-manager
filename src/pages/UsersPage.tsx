@@ -124,7 +124,7 @@ export function UsersPage() {
     row(u.email, async () => {
       const next = { ...u, ...patch }
       await upsertUser({ email: u.email, displayName: u.displayName, role: next.role, active: next.active }, actor, false)
-      // Quem deixa de poder ver secrets perde logo o acesso ao cofre.
+      // Quem deixa de poder ver secrets perde logo o acesso ao Credentials Vault.
       if ((next.role === 'viewer' || !next.active) && grantBy.has(u.email)) await revokeVault(u.email, actor)
       toast('Utilizador atualizado.')
     })
@@ -133,14 +133,14 @@ export function UsersPage() {
     row(k.email, async () => {
       if (!vault.key || !vault.meta) return setUnlockOpen(true)
       await grantVault(k, vault.key, vault.meta.version, actor)
-      toast(`Acesso ao cofre dado a ${k.email}.`)
+      toast(`Acesso ao Credentials Vault dado a ${k.email}.`)
     })
 
   return (
     <>
       <PageHeader
-        title="Utilizadores"
-        description="Só entra quem estiver nesta lista. Viewers veem fichas; Editors editam e podem receber acesso ao cofre; Admins gerem tudo."
+        title="Access Control"
+        description="Só entra quem estiver nesta lista. Viewers veem fichas; Editors editam e podem receber acesso ao Credentials Vault; Admins gerem tudo."
         actions={
           <Button variant="primary" onClick={() => setAddOpen(true)}>
             <UserPlus size={14} aria-hidden />
@@ -191,7 +191,7 @@ export function UsersPage() {
                     </div>
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                       {u.role === 'viewer' ? (
-                        <span className="text-[13px] text-ink-subtle">Sem cofre (Viewer)</span>
+                        <span className="text-[13px] text-ink-subtle">Sem Credentials Vault (Viewer)</span>
                       ) : !k ? (
                         <StatusPill tone="run">Sem chaves criadas</StatusPill>
                       ) : (
@@ -217,11 +217,11 @@ export function UsersPage() {
                       {k && canHold && (!g || stale) ? (
                         <Button size="sm" variant="primary" loading={busyRow === u.email} onClick={() => (vault.key ? setConfirmGrant(k) : setUnlockOpen(true))}>
                           <Key size={14} aria-hidden />
-                          Dar acesso ao cofre
+                          Dar acesso ao Credentials Vault
                         </Button>
                       ) : null}
                       {g && u.email !== me ? (
-                        <Button size="sm" variant="ghost" onClick={() => row(u.email, async () => (await revokeVault(u.email, actor), toast('Acesso ao cofre retirado.')))}>
+                        <Button size="sm" variant="ghost" onClick={() => row(u.email, async () => (await revokeVault(u.email, actor), toast('Acesso ao Credentials Vault retirado.')))}>
                           Retirar acesso
                         </Button>
                       ) : null}
@@ -247,9 +247,9 @@ export function UsersPage() {
               <ArrowsClockwise size={20} />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="font-display text-[18px] font-semibold tracking-[-0.02em] text-ink">Rodar a chave do cofre</h2>
+              <h2 className="font-display text-[18px] font-semibold tracking-[-0.02em] text-ink">Rodar a chave do Credentials Vault</h2>
               <p className="mt-1 max-w-[65ch] text-sm text-ink-muted">
-                Gera uma chave nova, volta a cifrar todos os secrets e renova o acesso de quem o tem. Faz isto quando alguém sai da equipa depois de ter tido acesso. Versão atual: {vault.meta?.version ?? 'sem cofre'}.
+                Gera uma chave nova, volta a cifrar todos os secrets e renova o acesso de quem o tem. Faz isto quando alguém sai da equipa depois de ter tido acesso. Versão atual: {vault.meta?.version ?? 'sem Credentials Vault'}.
               </p>
               {rotating ? <p className="mt-2 text-[13px] text-accent-text" role="status">{rotating}</p> : null}
             </div>
@@ -266,7 +266,7 @@ export function UsersPage() {
       <ConfirmDialog
         open={!!confirmGrant}
         onClose={() => setConfirmGrant(null)}
-        title={`Dar acesso ao cofre a ${confirmGrant?.email}?`}
+        title={`Dar acesso ao Credentials Vault a ${confirmGrant?.email}?`}
         body={
           <>
             Confirma com a pessoa que a impressão digital dela é esta:
@@ -283,8 +283,8 @@ export function UsersPage() {
       <ConfirmDialog
         open={rotateOpen}
         onClose={() => setRotateOpen(false)}
-        title="Rodar a chave do cofre?"
-        body="Todos os secrets são cifrados de novo com uma chave nova numa só operação. Quem tem o cofre aberto noutra sessão tem de o desbloquear outra vez."
+        title="Rodar a chave do Credentials Vault?"
+        body="Todos os secrets são cifrados de novo com uma chave nova numa só operação. Quem tem o Credentials Vault aberto noutra sessão tem de o desbloquear outra vez."
         confirmLabel="Rodar agora"
         loading={!!rotating}
         onConfirm={async () => {

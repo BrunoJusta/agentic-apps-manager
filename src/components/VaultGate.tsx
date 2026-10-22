@@ -73,7 +73,7 @@ function UnlockForm({ onDone }: { onDone?: () => void }) {
   }
   return (
     <form onSubmit={submit} className="flex flex-col gap-3">
-      <Field label="Passphrase" htmlFor="unlock-pp" error={err} hint={`O cofre volta a bloquear após ${AUTO_LOCK_MINUTES} minutos sem atividade.`}>
+      <Field label="Passphrase" htmlFor="unlock-pp" error={err} hint={`O Credentials Vault volta a bloquear após ${AUTO_LOCK_MINUTES} minutos sem atividade.`}>
         <Input id="unlock-pp" type="password" autoComplete="current-password" autoFocus value={p} onChange={(e) => setP(e.target.value)} aria-invalid={!!err} aria-describedby={err ? 'unlock-pp-error' : 'unlock-pp-hint'} spellCheck={false} />
       </Field>
       <div>
@@ -97,7 +97,7 @@ export function UnlockBurst() {
   )
 }
 
-/** Cartão completo com o estado do cofre e a ação seguinte certa para o utilizador. */
+/** Cartão completo com o estado do Credentials Vault e a ação seguinte certa para o utilizador. */
 export function VaultStatusCard({ compact }: { compact?: boolean }) {
   const vault = useVault()
   const { isAdmin } = useAuth()
@@ -120,19 +120,19 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
 
   switch (vault.status) {
     case 'unavailable':
-      return shell(<LockKey size={20} />, 'Sem acesso ao cofre', 'O teu papel é Viewer. Vês as fichas das apps, mas as variáveis e os secrets do cofre ficam fora de alcance.')
+      return shell(<LockKey size={20} />, 'Sem acesso ao Credentials Vault', 'O teu papel é Viewer. Vês as fichas das apps, mas as variáveis e os secrets do Credentials Vault ficam fora de alcance.')
     case 'loading':
       return (
         <Panel className="flex items-center gap-3 p-5 text-sm text-ink-subtle" >
-          <Spinner /> A verificar o cofre…
+          <Spinner /> A verificar o Credentials Vault…
         </Panel>
       )
     case 'not-initialized':
       return isAdmin
         ? shell(
             <Sparkle size={20} />,
-            'Inicializar o cofre',
-            'Ainda não existe chave do cofre. Ao inicializar, o teu browser gera a chave, cifra-a para ti, e ficas com o cofre aberto. Usa a tua passphrase pessoal (se ainda não tens chaves, são criadas agora).',
+            'Inicializar o Credentials Vault',
+            'Ainda não existe chave do Credentials Vault. Ao inicializar, o teu browser gera a chave, cifra-a para ti, e ficas com o Credentials Vault aberto. Usa a tua passphrase pessoal (se ainda não tens chaves, são criadas agora).',
             vault.myKeys ? (
               <UnlockLikeInit />
             ) : (
@@ -140,17 +140,17 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
                 submitLabel="Criar chaves e inicializar"
                 onSubmit={async (p) => {
                   await vault.initialize(p)
-                  toast('Cofre inicializado e aberto.')
+                  toast('Credentials Vault inicializado e aberto.')
                 }}
               />
             ),
           )
-        : shell(<LockKey size={20} />, 'O cofre ainda não foi inicializado', 'Um Admin tem de o inicializar primeiro. Entretanto podes criar as tuas chaves pessoais para ficares pronto.', vault.myKeys ? null : <PassphraseCreate submitLabel="Criar as minhas chaves" onSubmit={vault.createKeys} />)
+        : shell(<LockKey size={20} />, 'O Credentials Vault ainda não foi inicializado', 'Um Admin tem de o inicializar primeiro. Entretanto podes criar as tuas chaves pessoais para ficares pronto.', vault.myKeys ? null : <PassphraseCreate submitLabel="Criar as minhas chaves" onSubmit={vault.createKeys} />)
     case 'no-keys':
       return shell(
         <Key size={20} />,
         'Cria as tuas chaves pessoais',
-        'Para veres secrets precisas de um par de chaves só teu, protegido por uma passphrase. Depois um Admin dá-te acesso ao cofre.',
+        'Para veres secrets precisas de um par de chaves só teu, protegido por uma passphrase. Depois um Admin dá-te acesso ao Credentials Vault.',
         <PassphraseCreate
           submitLabel="Criar as minhas chaves"
           onSubmit={async (p) => {
@@ -166,8 +166,8 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
         vault.status === 'no-grant' ? 'À espera de acesso' : 'O teu acesso precisa de ser renovado',
         <>
           {vault.status === 'no-grant'
-            ? 'As tuas chaves estão criadas. Pede a um Admin para te dar acesso ao cofre.'
-            : 'A chave do cofre foi rodada e o teu acesso é da versão anterior. Pede a um Admin para te dar acesso outra vez.'}{' '}
+            ? 'As tuas chaves estão criadas. Pede a um Admin para te dar acesso ao Credentials Vault.'
+            : 'A chave do Credentials Vault foi rodada e o teu acesso é da versão anterior. Pede a um Admin para te dar acesso outra vez.'}{' '}
           Para confirmarem que é mesmo a tua chave, diz-lhes a impressão digital:
           <span className="tg mn mt-3 w-fit px-3 py-1.5 text-[13px] tracking-wider text-ink">{vault.myKeys?.fingerprint}</span>
         </>,
@@ -175,11 +175,11 @@ export function VaultStatusCard({ compact }: { compact?: boolean }) {
         'warning',
       )
     case 'locked':
-      return shell(<LockKey size={20} />, 'Cofre bloqueado', 'Escreve a tua passphrase pessoal para veres, copiares e criares variáveis e secrets nesta sessão.', <UnlockForm onDone={() => toast('Cofre aberto.')} />)
+      return shell(<LockKey size={20} />, 'Credentials Vault bloqueado', 'Escreve a tua passphrase pessoal para veres, copiares e criares variáveis e secrets nesta sessão.', <UnlockForm onDone={() => toast('Credentials Vault aberto.')} />)
     case 'unlocked':
       return shell(
         <UnlockBurst />,
-        'Cofre aberto',
+        'Credentials Vault aberto',
         `Podes revelar, copiar e exportar secrets. Bloqueia sozinho após ${AUTO_LOCK_MINUTES} minutos sem atividade.`,
         <Button onClick={vault.lock}>
           <LockKey size={16} aria-hidden />
@@ -203,7 +203,7 @@ function UnlockLikeInit() {
         setErr(null)
         try {
           await vault.initialize(p)
-          toast('Cofre inicializado e aberto.')
+          toast('Credentials Vault inicializado e aberto.')
         } catch (e2) {
           setErr(e2 instanceof WrongPassphraseError ? 'Passphrase incorreta.' : (e2 as Error).message)
         } finally {
@@ -217,7 +217,7 @@ function UnlockLikeInit() {
       </Field>
       <div>
         <Button type="submit" variant="primary" loading={busy} disabled={!p}>
-          Inicializar cofre
+          Inicializar Credentials Vault
         </Button>
       </div>
     </form>
@@ -258,7 +258,7 @@ function ResetKeysLink() {
           </>
         }
       >
-        <p className="text-sm text-ink-muted">As tuas chaves atuais e o teu acesso ao cofre são apagados. Depois crias chaves novas e um Admin dá-te acesso outra vez. Os secrets não se perdem.</p>
+        <p className="text-sm text-ink-muted">As tuas chaves atuais e o teu acesso ao Credentials Vault são apagados. Depois crias chaves novas e um Admin dá-te acesso outra vez. Os secrets não se perdem.</p>
       </Dialog>
     </>
   )
@@ -269,14 +269,14 @@ export function UnlockDialog({ open, onClose }: { open: boolean; onClose: () => 
   const vault = useVault()
   const ready = vault.status === 'locked'
   return (
-    <Dialog open={open} onClose={onClose} title="Desbloquear o cofre" size="sm" description={ready ? undefined : 'Ainda falta um passo antes de poderes ver secrets.'}>
+    <Dialog open={open} onClose={onClose} title="Desbloquear o Credentials Vault" size="sm" description={ready ? undefined : 'Ainda falta um passo antes de poderes ver secrets.'}>
       {ready ? (
         <UnlockForm onDone={onClose} />
       ) : (
         <div className="flex items-start gap-2 text-sm text-ink-muted">
           <ShieldWarning size={18} className="mt-px shrink-0 text-warning" aria-hidden />
           <span>
-            Vai à página <Link to="/cofre" onClick={onClose} className="text-accent-text underline underline-offset-2">Cofre</Link> para ver o que falta.
+            Vai à página <Link to="/credentials-vault" onClick={onClose} className="text-accent-text underline underline-offset-2">Credentials Vault</Link> para ver o que falta.
           </span>
         </div>
       )}

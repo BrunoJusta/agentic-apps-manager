@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Archive, MagnifyingGlass, Rows, SquaresFour } from '@phosphor-icons/react'
+import { Briefcase, MagnifyingGlass, Rows, SquaresFour } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useVault } from '../context/VaultContext'
 import { linkedItems } from '../lib/vault-utils'
@@ -11,24 +11,23 @@ import { AppCardLink } from '../components/AppCard'
 import { AppsTable } from '../components/AppsTable'
 import { EmptyState, Segmented, Skeleton } from '../components/ui'
 
-type Which = 'todas' | Extract<StatusKey, 'producao' | 'descontinuada'>
+type Which = Extract<StatusKey, 'producao' | 'descontinuada'>
 
-/** Apps que já saíram do pipeline: em produção ou descontinuadas. */
+/** Apps que já saíram do pipeline: em Production ou Shelved. */
 export function FinishedPage() {
   const { apps, loading } = useApps()
   const { itemsById } = useVault()
   const [q, setQ] = useState('')
-  const [which, setWhich] = useState<Which>('todas')
+  const [which, setWhich] = useState<Which>('producao')
   const [view, setView] = useState<'cartoes' | 'tabela'>('cartoes')
 
   const finished = useMemo(() => apps.filter((a) => isFinished(a.status)), [apps])
   const counts = {
-    todas: finished.length,
     producao: finished.filter((a) => a.status === 'producao').length,
     descontinuada: finished.filter((a) => a.status === 'descontinuada').length,
   }
   const rows = useMemo(
-    () => finished.filter((a) => (which === 'todas' || a.status === which) && matchesSearch(a, q)).sort((a, b) => a.name.localeCompare(b.name, 'pt')),
+    () => finished.filter((a) => a.status === which && matchesSearch(a, q)).sort((a, b) => a.name.localeCompare(b.name, 'pt')),
     [finished, which, q],
   )
   const secretsByApp = useMemo(() => {
@@ -39,7 +38,7 @@ export function FinishedPage() {
 
   return (
     <>
-      <PageHeader title="Finalizadas" description="Apps que já saíram do pipeline: em produção ou descontinuadas. Pedidos de alteração, updates e novos módulos registam-se no separador Pedidos de cada app.">
+      <PageHeader title="Production Portfolio" description="Apps que já saíram do pipeline: em Production ou Shelved. Pedidos de alteração, updates e novos módulos registam-se no separador Pedidos de cada app.">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-60">
             <MagnifyingGlass size={14} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-tertiary" aria-hidden />
@@ -48,7 +47,7 @@ export function FinishedPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Filtrar apps…"
-              aria-label="Filtrar apps finalizadas"
+              aria-label="Filtrar apps do Production Portfolio"
               className="h-[34px] w-full rounded-full bg-surface-1 pr-3 pl-8 text-[13px] text-ink shadow-ring placeholder:text-ink-tertiary focus:shadow-[0_0_0_1px_var(--ink),0_0_0_4px_var(--accent-tint)] focus:outline-none focus-visible:outline-none"
               autoComplete="off"
             />
@@ -58,9 +57,8 @@ export function FinishedPage() {
             value={which}
             onChange={setWhich}
             options={[
-              { value: 'todas', label: 'Todas', count: counts.todas },
-              { value: 'producao', label: 'Produção', count: counts.producao },
-              { value: 'descontinuada', label: 'Descontinuadas', count: counts.descontinuada },
+              { value: 'producao', label: 'Production', count: counts.producao },
+              { value: 'descontinuada', label: 'Shelved', count: counts.descontinuada },
             ]}
           />
           <div className="ml-auto">
@@ -85,7 +83,7 @@ export function FinishedPage() {
             ))}
           </div>
         ) : finished.length === 0 ? (
-          <EmptyState icon={<Archive size={22} />} title="Ainda não há apps finalizadas" body="Quando uma app passar para Produção ou for descontinuada, sai do board e aparece aqui." />
+          <EmptyState icon={<Briefcase size={22} />} title="Ainda não há apps no Production Portfolio" body="Quando uma app passar para Production ou Shelved, sai do board e aparece aqui." />
         ) : view === 'tabela' ? (
           <AppsTable apps={rows} empty={<EmptyState title="Nenhuma app corresponde aos filtros" />} />
         ) : rows.length === 0 ? (

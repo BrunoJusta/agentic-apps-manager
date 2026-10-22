@@ -82,7 +82,7 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
   if (!e.enabled) {
     return (
       <Panel>
-        <EmptyState icon={<HardDrives size={36} weight="thin" />} title="Este ambiente não existe" body="Ativa-o na ficha da app (Editar, secção Ambientes) para registares base de dados, alojamento e ligares variáveis e secrets do cofre." />
+        <EmptyState icon={<HardDrives size={36} weight="thin" />} title="Este ambiente não existe" body="Ativa-o na ficha da app (Editar, secção Ambientes) para registares base de dados, alojamento e ligares variáveis e secrets do Credentials Vault." />
       </Panel>
     )
   }
@@ -94,7 +94,7 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
       const entries: { key: string; value: string; comment?: string }[] = []
       for (const it of items) entries.push({ key: it.name, value: await revealVaultItem(it, vault.key), comment: it.note || undefined })
       download(`.env.${env}`, serializeDotenv(entries, `${app.name} (${env.toUpperCase()})\nExportado em ${new Date().toLocaleString('pt-PT')}. Contém secrets: não partilhes nem faças commit.`))
-      await logAudit(actor, 'export_env', { appId: app.id, appName: app.name, env, detail: `${items.length} itens do cofre` })
+      await logAudit(actor, 'export_env', { appId: app.id, appName: app.name, env, detail: `${items.length} itens do Credentials Vault` })
       toast('Ficheiro .env gerado. Apaga-o quando já não precisares.')
     } catch (err) {
       toast(`Não foi possível exportar: ${(err as Error).message}`, 'error')
@@ -131,13 +131,13 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setPickerOpen(true)}>
                 <Plus size={14} aria-hidden />
-                Ligar do cofre
+                Ligar do Credentials Vault
               </Button>
             </div>
           ) : null}
         </div>
         {!canEdit ? (
-          <p className="px-4 py-6 text-center text-[13px] text-ink-subtle">As variáveis e os secrets vivem no cofre e só são visíveis para Editors e Admins.</p>
+          <p className="px-4 py-6 text-center text-[13px] text-ink-subtle">As variáveis e os secrets vivem no Credentials Vault e só são visíveis para Editors e Admins.</p>
         ) : !vault.itemsLoaded ? (
           <p className="px-4 py-6 text-center text-[13px] text-ink-subtle">A carregar…</p>
         ) : items.length ? (
@@ -156,7 +156,7 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
                   {it.note ? <span className="min-w-0 truncate text-[12px] text-ink-subtle">{it.note}</span> : null}
                 </span>
                 <span className="flex items-center gap-0.5 sm:opacity-70 sm:transition-opacity sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
-                  <Link to={`/cofre?q=${encodeURIComponent(it.name)}#item-${it.id}`} className="inline-flex size-8 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink" aria-label={`Ver ${it.name} no cofre`} title="Ver no cofre">
+                  <Link to={`/credentials-vault?q=${encodeURIComponent(it.name)}#item-${it.id}`} className="inline-flex size-8 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink" aria-label={`Ver ${it.name} no Credentials Vault`} title="Ver no Credentials Vault">
                     <Vault size={16} aria-hidden />
                   </Link>
                   <IconButton label={`Desligar ${it.name} deste ambiente`} onClick={() => setUnlink(it)} className="hover:text-danger">
@@ -168,10 +168,10 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
           </ul>
         ) : (
           <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
-            <p className="text-[13px] text-ink-subtle">Nenhum item do cofre ligado a {env.toUpperCase()}.</p>
+            <p className="text-[13px] text-ink-subtle">Nenhum item do Credentials Vault ligado a {env.toUpperCase()}.</p>
             <Button size="sm" variant="secondary" onClick={() => setPickerOpen(true)}>
               <LinkSimple size={14} aria-hidden />
-              Escolher do cofre
+              Escolher do Credentials Vault
             </Button>
           </div>
         )}
@@ -181,13 +181,13 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
             <span className="flex-1">
               Há {legacyCount} {legacyCount === 1 ? 'item antigo' : 'itens antigos'} guardados dentro desta app.
             </span>
-            <Link to="/cofre" className="font-medium underline underline-offset-2">
-              Migrar no Cofre
+            <Link to="/credentials-vault" className="font-medium underline underline-offset-2">
+              Migrar no Credentials Vault
             </Link>
           </div>
         ) : null}
       </Panel>
-      {canEdit ? <p className="-mt-2 px-1 text-[12px] text-ink-subtle">A ficha só mostra os nomes. Os valores ficam cifrados no cofre; para os ver ou alterar, abre o Cofre.</p> : null}
+      {canEdit ? <p className="-mt-2 px-1 text-[12px] text-ink-subtle">A ficha só mostra os nomes. Os valores ficam cifrados no Credentials Vault; para os ver ou alterar, abre o Credentials Vault.</p> : null}
 
       <VaultPickerDialog open={pickerOpen} onClose={() => setPickerOpen(false)} app={app} env={env} uses={uses} onCreateNew={openCreate} />
       <VaultItemDialog open={createOpen} onClose={() => setCreateOpen(false)} editing={null} linkTo={{ app, env }} />
@@ -196,7 +196,7 @@ export function EnvPanel({ app, env }: { app: AgenticApp; env: EnvKey }) {
         open={!!unlink}
         onClose={() => setUnlink(null)}
         title={`Desligar ${unlink?.name}?`}
-        body={`Deixa de estar ligado a ${app.name} (${env.toUpperCase()}). O item continua no cofre e nas outras apps onde estiver ligado.`}
+        body={`Deixa de estar ligado a ${app.name} (${env.toUpperCase()}). O item continua no Credentials Vault e nas outras apps onde estiver ligado.`}
         confirmLabel="Desligar"
         onConfirm={async () => {
           if (!unlink) return

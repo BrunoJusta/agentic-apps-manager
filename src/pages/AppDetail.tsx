@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
 import {
@@ -9,26 +9,36 @@ import {
   ArrowLeft,
   Copy,
   ArrowSquareOut,
-  CheckCircle,
-  Circle,
-  ClockCounterClockwise,
+  Buildings,
+  CalendarBlank,
+  Coins,
   Flag,
   GithubLogo,
+  Globe,
+  Key,
   LinkSimple,
   PencilSimple,
+  RocketLaunch,
+  Stack,
+  TextAlignLeft,
   Trash,
+  UserCircle,
+  Tag,
+  Warning,
+  Note,
 } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useVault } from '../context/VaultContext'
 import { linkedItems } from '../lib/vault-utils'
 import { productionReadiness } from '../lib/app-utils'
-import { ENVS, maturityLabel, PERSONAL_DATA, priorityLabel, repoAccountLabel, STATUSES, statusLabel } from '../lib/constants'
-import { fmtDate, fmtDateTime, fmtEur, fmtNumber, fmtRelative } from '../lib/format'
-import { deleteApp, moveApp, subscribeHistory } from '../data/store'
-import type { AgenticApp, EnvKey, HistoryEntry, Person, StatusKey } from '../lib/types'
-import { Avatar, Badge, Button, ConfirmDialog, EmptyState, Gauge, IconButton, Panel, Segmented, Skeleton } from '../components/ui'
+import { ENVS, isFinished, maturityLabel, PERSONAL_DATA, priorityLabel, repoAccountLabel, STATUSES, statusLabel } from '../lib/constants'
+import { fmtDate, fmtEur, fmtRelative } from '../lib/format'
+import { deleteApp, moveApp } from '../data/store'
+import type { AgenticApp, EnvKey, Person, StatusKey } from '../lib/types'
+import { Avatar, Badge, Button, ConfirmDialog, EmptyState, IconButton, Panel, Segmented, Skeleton } from '../components/ui'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
 import { FilterChip } from '../components/FiltersBar'
 import { AppIcon, PriorityIcon, rotationDue } from '../components/AppCard'
@@ -38,18 +48,30 @@ import { openRequestsCount, RequestsPanel, useAppRequests } from '../components/
 const TABS = [
   { key: 'geral', label: 'Visão geral', icon: Info },
   { key: 'pedidos', label: 'Pedidos', icon: ChatCircleText },
-  { key: 'ambientes', label: 'Ambientes e cofre', icon: HardDrives },
+  { key: 'ambientes', label: 'Ambientes e Credentials Vault', icon: HardDrives },
   { key: 'governo', label: 'Governance', icon: ShieldCheck },
-  { key: 'historico', label: 'Histórico', icon: ClockCounterClockwise },
 ] as const
 type TabKey = (typeof TABS)[number]['key']
 
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+function Fact({ label, icon: I, children }: { label: string; icon: Icon; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2 text-sm">
-      <dt className="shrink-0 text-ink-subtle">{label}</dt>
+    <div className="flex items-center justify-between gap-4 py-2 text-sm">
+      <dt className="flex shrink-0 items-center gap-2 text-ink-subtle">
+        <I size={15} className="text-ink-tertiary" aria-hidden />
+        {label}
+      </dt>
       <dd className="min-w-0 truncate text-right text-ink">{children || <span className="text-ink-tertiary">Por definir</span>}</dd>
     </div>
+  )
+}
+
+/** Título de contentor com ícone antes da label. */
+function PanelTitle({ icon: I, children }: { icon: Icon; children: React.ReactNode }) {
+  return (
+    <h2 className="flex items-center gap-2 font-display text-[13px] font-semibold text-ink">
+      <I size={16} className="shrink-0 text-ink-subtle" aria-hidden />
+      {children}
+    </h2>
   )
 }
 
@@ -98,7 +120,7 @@ function EnvUrls({ app }: { app: AgenticApp }) {
   const toast = useToast()
   return (
     <Panel className="p-5">
-      <h2 className="font-display text-[13px] font-semibold text-ink">URLs da app</h2>
+      <PanelTitle icon={Globe}>URLs da app</PanelTitle>
       <ul className="mt-2 divide-y divide-hairline">
         {ENVS.map((e) => {
           const env = app.environments[e.key]
@@ -135,8 +157,6 @@ function EnvUrls({ app }: { app: AgenticApp }) {
 }
 
 function Overview({ app }: { app: AgenticApp }) {
-  const r = productionReadiness(app)
-  const done = r.items.filter((i) => i.ok).length
   const stackGroups: [string, string[]][] = [
     ['Frontend', app.stack.frontend],
     ['Backend', app.stack.backend],
@@ -148,11 +168,11 @@ function Overview({ app }: { app: AgenticApp }) {
       <div className="flex min-w-0 flex-col gap-5">
         <EnvUrls app={app} />
         <Panel className="p-5">
-          <h2 className="font-display text-[13px] font-semibold text-ink">Descrição</h2>
+          <PanelTitle icon={TextAlignLeft}>Descrição</PanelTitle>
           {app.description ? <p className="mt-2 max-w-[70ch] text-sm leading-relaxed whitespace-pre-line text-ink">{app.description}</p> : <p className="mt-2 text-sm text-ink-tertiary">Ainda sem descrição.</p>}
         </Panel>
         <Panel className="p-5">
-          <h2 className="font-display text-[13px] font-semibold text-ink">Stack</h2>
+          <PanelTitle icon={Stack}>Stack</PanelTitle>
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {stackGroups.map(([label, tags]) => (
               <div key={label}>
@@ -163,32 +183,22 @@ function Overview({ app }: { app: AgenticApp }) {
               </div>
             ))}
           </div>
-          {app.stack.auth ? <p className="mt-4 text-sm text-ink-muted">Autenticação: {app.stack.auth}</p> : null}
-        </Panel>
-        <Panel className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start">
-          <div className="flex shrink-0 flex-col items-center gap-1 sm:w-40">
-            <Gauge value={done} max={r.items.length} label="Pronta para Produção" />
-            <p className="font-display text-[12px] font-medium text-ink-subtle">Pronta para Produção</p>
-          </div>
-          <ul className="grid flex-1 grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-            {r.items.map((i) => (
-              <li key={i.label} className="flex items-center gap-2 text-[13px]">
-                {i.ok ? <CheckCircle size={16} weight="fill" className="shrink-0 text-success" aria-label="Feito" /> : <Circle size={16} className="shrink-0 text-ink-tertiary" aria-label="Em falta" />}
-                <span className={i.ok ? 'text-ink-subtle' : 'text-ink'}>{i.label}</span>
-              </li>
-            ))}
-          </ul>
+          {app.stack.auth ? (
+            <p className="mt-4 flex items-center gap-2 text-sm text-ink-muted">
+              <Key size={15} className="text-ink-tertiary" aria-hidden />
+              Autenticação: {app.stack.auth}
+            </p>
+          ) : null}
         </Panel>
       </div>
       <Panel className="h-fit p-5">
         <dl className="divide-y divide-hairline">
-          <Fact label="Área">{app.area}</Fact>
-          <Fact label="Início">{fmtDate(app.startDate)}</Fact>
-          <Fact label="Go-live">{fmtDate(app.goLiveDate)}</Fact>
-          <Fact label="Utilizadores ativos">{fmtNumber(app.activeUsers)}</Fact>
-          <Fact label="Owner">{app.owner.name}</Fact>
-          <Fact label="Repositório">{app.repo.account ? repoAccountLabel(app.repo.account) : ''}</Fact>
-          <Fact label="Custo mensal">{fmtEur(app.governance.monthlyCost)}</Fact>
+          <Fact icon={Buildings} label="Área">{app.area}</Fact>
+          <Fact icon={CalendarBlank} label="Início">{fmtDate(app.startDate)}</Fact>
+          <Fact icon={RocketLaunch} label="Go-live">{fmtDate(app.goLiveDate)}</Fact>
+          <Fact icon={UserCircle} label="Owner">{app.owner.name}</Fact>
+          <Fact icon={GithubLogo} label="Repositório">{app.repo.account ? repoAccountLabel(app.repo.account) : ''}</Fact>
+          <Fact icon={Coins} label="Custo mensal">{fmtEur(app.governance.monthlyCost)}</Fact>
         </dl>
         {app.repo.url ? (
           <a href={app.repo.url} target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-2 rounded-full bg-surface-1 px-3.5 py-2 font-display text-[13px] font-medium text-ink shadow-ring transition-colors hover:bg-surface-2">
@@ -207,13 +217,13 @@ function Governance({ app }: { app: AgenticApp }) {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <Panel className="p-5 lg:col-span-2">
-        <h2 className="font-display text-[13px] font-semibold text-ink">Owner</h2>
+        <PanelTitle icon={UserCircle}>Owner</PanelTitle>
         <div className="mt-3">
           <PersonLine p={app.owner} />
         </div>
       </Panel>
       <Panel className="p-5">
-        <h2 className="font-display text-[13px] font-semibold text-ink">Links</h2>
+        <PanelTitle icon={LinkSimple}>Links</PanelTitle>
         {app.links.length ? (
           <ul className="mt-3 flex flex-col gap-1">
             {app.links.map((l, i) => (
@@ -232,61 +242,28 @@ function Governance({ app }: { app: AgenticApp }) {
         )}
       </Panel>
       <Panel className="p-5">
-        <h2 className="font-display text-[13px] font-semibold text-ink">Governance</h2>
+        <PanelTitle icon={ShieldCheck}>Governance</PanelTitle>
         <dl className="mt-1 divide-y divide-hairline">
-          <Fact label="Dados pessoais (RGPD)">
+          <Fact icon={ShieldCheck} label="Dados pessoais (RGPD)">
             <Badge tone={app.governance.personalData === 'sim' ? 'warning' : app.governance.personalData === 'nao' ? 'success' : 'neutral'}>{pd?.label}</Badge>
           </Fact>
-          <Fact label="Classificação">{app.governance.dataClassification}</Fact>
-          <Fact label="Custo mensal">{fmtEur(app.governance.monthlyCost)}</Fact>
+          <Fact icon={Tag} label="Classificação">{app.governance.dataClassification}</Fact>
+          <Fact icon={Coins} label="Custo mensal">{fmtEur(app.governance.monthlyCost)}</Fact>
         </dl>
         {app.governance.risks ? (
           <>
-            <h3 className="mt-4 text-[12px] text-ink-subtle">Riscos</h3>
+            <h3 className="mt-4 flex items-center gap-1.5 text-[12px] text-ink-subtle"><Warning size={14} aria-hidden />Riscos</h3>
             <p className="mt-1 text-sm whitespace-pre-line text-ink">{app.governance.risks}</p>
           </>
         ) : null}
         {app.governance.notes ? (
           <>
-            <h3 className="mt-4 text-[12px] text-ink-subtle">Notas</h3>
+            <h3 className="mt-4 flex items-center gap-1.5 text-[12px] text-ink-subtle"><Note size={14} aria-hidden />Notas</h3>
             <p className="mt-1 text-sm whitespace-pre-line text-ink">{app.governance.notes}</p>
           </>
         ) : null}
       </Panel>
     </div>
-  )
-}
-
-function History({ appId }: { appId: string }) {
-  const [rows, setRows] = useState<HistoryEntry[] | null>(null)
-  useEffect(() => subscribeHistory(appId, setRows, () => setRows([])), [appId])
-  if (!rows)
-    return (
-      <div className="flex flex-col gap-2" role="status" aria-label="A carregar">
-        <Skeleton className="h-10" />
-        <Skeleton className="h-10" />
-      </div>
-    )
-  if (!rows.length) return <EmptyState icon={<ClockCounterClockwise size={36} weight="thin" />} title="Sem histórico" />
-  return (
-    <Panel className="px-5 py-2">
-      <ol className="relative">
-        {rows.map((h, i) => (
-          <li key={h.id} className="relative flex gap-3 py-3">
-            {i < rows.length - 1 ? <span aria-hidden className="absolute top-8 bottom-0 left-[11px] w-px bg-hairline" /> : null}
-            <Avatar name={h.byName || h.by} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-ink">
-                <span className="font-medium">{h.byName || h.by}</span> <span className="text-ink-muted">{h.summary.charAt(0).toLowerCase() + h.summary.slice(1)}</span>
-              </p>
-              <p className="text-[12px] text-ink-subtle" title={fmtDateTime(h.at ?? null)}>
-                {fmtRelative(h.at ?? null)}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </Panel>
   )
 }
 
@@ -341,8 +318,7 @@ export function AppDetailPage() {
 
   const changeStatus = async (s: StatusKey) => {
     if (s === 'producao' && !productionReadiness(app).ready) {
-      toast('Completa a ficha antes de passar para Produção. O que falta está em “Pronta para Produção”.', 'error')
-      setTab('geral')
+      toast(`Para passar a Production falta: ${productionReadiness(app).missing.join(', ')}.`, 'error')
       return
     }
     try {
@@ -357,11 +333,15 @@ export function AppDetailPage() {
   return (
     <div className="enter" style={entityStyle(areaColor(app.area))}>
       <div className="relative border-b border-hairline pt-8">
-        <div aria-hidden className="pointer-events-none absolute -inset-x-4 -top-px h-40 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--c,transparent)_7%,transparent),transparent)] sm:-inset-x-6" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-px h-40 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--c,transparent)_7%,transparent),transparent)]"
+          style={{ left: 'calc(-1 * max(var(--gutter), env(safe-area-inset-left)))', right: 'calc(-1 * max(var(--gutter), env(safe-area-inset-right)))' }}
+        />
         <div className="relative">
-          <Link to="/" className="inline-flex items-center gap-1 rounded-full font-display text-[13px] font-medium text-ink-subtle hover:text-ink">
+          <Link to={isFinished(app.status) ? '/production-portfolio' : '/'} className="inline-flex items-center gap-1 rounded-full font-display text-[13px] font-medium text-ink-subtle hover:text-ink">
             <ArrowLeft size={14} aria-hidden />
-            Apps
+            {isFinished(app.status) ? 'Production Portfolio' : 'Lifecycle Management'}
           </Link>
           <div className="mt-3 flex flex-wrap items-start gap-4">
             <AppIcon app={app} size={64} className="hidden sm:inline-flex" />
@@ -460,14 +440,13 @@ export function AppDetailPage() {
           </div>
         ) : null}
         {tab === 'governo' ? <Governance app={app} /> : null}
-        {tab === 'historico' ? <History appId={app.id} /> : null}
       </div>
 
       <ConfirmDialog
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         title={`Apagar ${app.name}?`}
-        body="A ficha, o histórico e os pedidos desta app são apagados de vez. As variáveis e os secrets continuam no cofre. Se a app só deixou de ser usada, muda o estado para Descontinuada em vez de apagar."
+        body="A ficha e os pedidos desta app são apagados de vez. As variáveis e os secrets continuam no Credentials Vault. Se a app só deixou de ser usada, muda o estado para Shelved em vez de apagar."
         confirmLabel="Apagar de vez"
         danger
         loading={deleting}

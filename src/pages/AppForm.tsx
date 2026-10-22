@@ -16,16 +16,18 @@ import {
   HOSTINGS,
   LINK_SUGGESTIONS,
   MATURITIES,
-  PERSONAL_DATA,
+  DATA_CLASSIFICATIONS,
   PRIORITIES,
   REPO_ACCOUNTS,
   STACK_SUGGESTIONS,
   STATUSES,
 } from '../lib/constants'
-import { allTags, productionReadiness, toInput } from '../lib/app-utils'
+import { productionReadiness, toInput } from '../lib/app-utils'
 import { createApp, updateApp } from '../data/store'
-import type { AppInput, EnvKey, Environment, RepoAccount, StatusKey } from '../lib/types'
-import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, PersonInput, Segmented, Select, Skeleton, TagInput, Textarea } from '../components/ui'
+import type { AppInput, EnvKey, Environment, MaturityKey, PriorityKey, RepoAccount, StatusKey } from '../lib/types'
+import { Button, ConfirmDialog, EmptyState, Field, IconButton, Input, PersonInput, Segmented, Skeleton, Textarea } from '../components/ui'
+import { Combobox, MultiCombobox, PillPicker, Switch } from '../components/fields'
+import { PriorityIcon } from '../components/AppCard'
 
 const SECTIONS: { id: string; label: string; icon: Icon }[] = [
   { id: 'identidade', label: 'Identidade', icon: IdentificationCard },
@@ -150,15 +152,22 @@ export function AppFormPage() {
   }, [dirty])
 
   const tagSuggestions = useMemo(() => {
-    const used = new Set(apps.flatMap(allTags))
     return {
       frontend: [...new Set([...STACK_SUGGESTIONS.frontend, ...apps.flatMap((a) => a.stack.frontend)])],
       backend: [...new Set([...STACK_SUGGESTIONS.backend, ...apps.flatMap((a) => a.stack.backend)])],
       llm: [...new Set([...STACK_SUGGESTIONS.llm, ...apps.flatMap((a) => a.stack.llm)])],
-      frameworks: [...new Set([...STACK_SUGGESTIONS.frameworks, ...apps.flatMap((a) => a.stack.frameworks), ...used])],
+      frameworks: [...new Set([...STACK_SUGGESTIONS.frameworks, ...apps.flatMap((a) => a.stack.frameworks)])],
     }
   }, [apps])
-  const areas = useMemo(() => [...new Set(apps.map((a) => a.area).filter(Boolean))], [apps])
+  const areas = useMemo(() => [...new Set(apps.map((a) => a.area).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt')), [apps])
+  const infra = useMemo(() => {
+    const envs = apps.flatMap((a) => Object.values(a.environments))
+    return {
+      db: [...new Set([...DB_TYPES, ...envs.map((e) => e.dbType).filter(Boolean)])],
+      hosting: [...new Set([...HOSTINGS, ...envs.map((e) => e.hosting).filter(Boolean)])],
+      auth: [...new Set([...AUTH_OPTIONS, ...apps.map((a) => a.stack.auth).filter(Boolean)])],
+    }
+  }, [apps])
   const [activeSection, setActiveSection] = useState('identidade')
   const formReady = !!form
   useEffect(() => {
@@ -237,7 +246,7 @@ export function AppFormPage() {
       <div className="pt-8 pb-6">
         <Link to={backTo} className="inline-flex items-center gap-1 rounded-full font-display text-[13px] font-medium text-ink-subtle hover:text-ink">
           <ArrowLeft size={14} aria-hidden />
-          {isNew ? 'Apps' : initial?.name}
+          {isNew ? 'Lifecycle Management' : initial?.name}
         </Link>
         <h1 className="mt-3 font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink min-[760px]:text-[32px] min-[760px]:leading-10">{isNew ? 'Nova app' : 'Editar ficha'}</h1>
       </div>
@@ -263,7 +272,7 @@ export function AppFormPage() {
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           {errors.readiness ? (
             <div id="form-errors" tabIndex={-1} role="alert" className="notice danger mb-2 py-2 text-sm text-danger outline-none">
-              <p className="font-medium">Para ficar em Produção falta:</p>
+              <p className="font-medium">Para ficar em Production falta:</p>
               <ul className="mt-1 list-inside list-disc">
                 {errors.readiness.map((m) => (
                   <li key={m}>{m}</li>
@@ -285,98 +294,77 @@ export function AppFormPage() {
             </Field>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Área ou departamento" htmlFor="f-area">
-                <Input id="f-area" list="areas" value={form.area} onChange={(e) => up({ area: e.target.value })} placeholder="Ex.: Supply Chain" autoComplete="off" />
-                <Datalist id="areas" options={areas} />
-              </Field>
-              <Field label="Prioridade" htmlFor="f-prio">
-                <Select id="f-prio" value={form.priority} onChange={(e) => up({ priority: e.target.value as AppInput['priority'] })}>
-                  {PRIORITIES.map((p) => (
-                    <option key={p.key} value={p.key}>
-                      {p.label}
-                    </option>
-                  ))}
-                </Select>
+                <Combobox id="f-area" value={form.area} onChange={(area) => up({ area })} options={areas} placeholder="Ex.: Supply Chain" />
               </Field>
             </div>
+            <Field label="Prioridade" htmlFor="f-prio">
+              <PillPicker<PriorityKey>
+                id="f-prio"
+                label="Prioridade"
+                value={form.priority}
+                onChange={(priority) => up({ priority })}
+                options={[...PRIORITIES].reverse().map((p) => ({ value: p.key, label: (<><PriorityIcon priority={p.key} />{p.label}</>) }))}
+              />
+            </Field>
           </Section>
 
-          <Section id="estado" title="Estado" description="Produção exige owner e ambiente de produção preenchidos. O repositório é opcional.">
+          <Section id="estado" title="Estado" description="Production exige owner e ambiente de produção preenchidos. O repositório é opcional.">
+            <Field label="Estado" htmlFor="f-status">
+              <PillPicker<StatusKey> id="f-status" label="Estado" value={form.status} onChange={(status) => up({ status })} options={STATUSES.map((s) => ({ value: s.key, label: s.label, title: s.hint }))} />
+            </Field>
+            <Field label="Maturidade" htmlFor="f-mat">
+              <PillPicker<MaturityKey> id="f-mat" label="Maturidade" value={form.maturity} onChange={(maturity) => up({ maturity })} options={MATURITIES.map((s) => ({ value: s.key, label: s.label }))} />
+            </Field>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field label="Estado" htmlFor="f-status">
-                <Select id="f-status" value={form.status} onChange={(e) => up({ status: e.target.value as StatusKey })}>
-                  {STATUSES.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Maturidade" htmlFor="f-mat">
-                <Select id="f-mat" value={form.maturity} onChange={(e) => up({ maturity: e.target.value as AppInput['maturity'] })}>
-                  {MATURITIES.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
               <Field label="Data de início" htmlFor="f-start">
                 <Input id="f-start" type="date" value={form.startDate} onChange={(e) => up({ startDate: e.target.value })} />
               </Field>
               <Field label="Data de go-live" htmlFor="f-golive">
                 <Input id="f-golive" type="date" value={form.goLiveDate} onChange={(e) => up({ goLiveDate: e.target.value })} />
               </Field>
-              <Field label="Utilizadores ativos" htmlFor="f-users" hint="Para medir adoção. Atualiza quando tiveres números.">
-                <Input
-                  id="f-users"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={form.activeUsers ?? ''}
-                  onChange={(e) => up({ activeUsers: e.target.value === '' ? null : Math.max(0, Number(e.target.value)) })}
-                />
-              </Field>
             </div>
           </Section>
 
-          <Section id="stack" title="Stack" description="Escreve e carrega Enter para adicionar. As etiquetas ficam disponíveis para as outras apps.">
+          <Section id="stack" title="Stack" description="Procura na lista ou escreve para adicionar uma opção nova. As novas opções ficam disponíveis para as outras apps.">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Frontend" htmlFor="f-fe">
-                <TagInput id="f-fe" value={form.stack.frontend} onChange={(v) => up({ stack: { ...form.stack, frontend: v } })} suggestions={tagSuggestions.frontend} placeholder="React, Vite…" />
+                <MultiCombobox id="f-fe" value={form.stack.frontend} onChange={(v) => up({ stack: { ...form.stack, frontend: v } })} options={tagSuggestions.frontend} placeholder="React, Vite…" />
               </Field>
               <Field label="Backend" htmlFor="f-be">
-                <TagInput id="f-be" value={form.stack.backend} onChange={(v) => up({ stack: { ...form.stack, backend: v } })} suggestions={tagSuggestions.backend} placeholder="Cloud Run, Node.js…" />
+                <MultiCombobox id="f-be" value={form.stack.backend} onChange={(v) => up({ stack: { ...form.stack, backend: v } })} options={tagSuggestions.backend} placeholder="Cloud Run, Node.js…" />
               </Field>
               <Field label="Modelos de IA" htmlFor="f-llm">
-                <TagInput id="f-llm" value={form.stack.llm} onChange={(v) => up({ stack: { ...form.stack, llm: v } })} suggestions={tagSuggestions.llm} placeholder="Gemini 2.5 Flash…" />
+                <MultiCombobox id="f-llm" value={form.stack.llm} onChange={(v) => up({ stack: { ...form.stack, llm: v } })} options={tagSuggestions.llm} placeholder="Gemini 2.5 Flash…" />
               </Field>
               <Field label="Frameworks de agentes" htmlFor="f-fw">
-                <TagInput id="f-fw" value={form.stack.frameworks} onChange={(v) => up({ stack: { ...form.stack, frameworks: v } })} suggestions={tagSuggestions.frameworks} placeholder="Google ADK, MCP…" />
+                <MultiCombobox id="f-fw" value={form.stack.frameworks} onChange={(v) => up({ stack: { ...form.stack, frameworks: v } })} options={tagSuggestions.frameworks} placeholder="Google ADK, MCP…" />
               </Field>
               <Field label="Autenticação" htmlFor="f-auth">
-                <Input id="f-auth" list="auths" value={form.stack.auth} onChange={(e) => up({ stack: { ...form.stack, auth: e.target.value } })} autoComplete="off" />
-                <Datalist id="auths" options={AUTH_OPTIONS} />
+                <Combobox id="f-auth" value={form.stack.auth} onChange={(auth) => up({ stack: { ...form.stack, auth } })} options={infra.auth} />
               </Field>
             </div>
           </Section>
 
           <Section id="ambientes" title="Ambientes" description="Infraestrutura de cada ambiente. As variáveis e os secrets gerem-se na ficha da app, separador Ambientes.">
-            <Datalist id="dbtypes" options={DB_TYPES} />
-            <Datalist id="hostings" options={HOSTINGS} />
             {ENVS.map((env) => {
               const e = form.environments[env.key]
               return (
                 <fieldset key={env.key} className={clsx('rounded-xl p-4 transition-colors', e.enabled ? 'srcf' : 'shadow-[inset_0_0_0_1px_var(--hairline-strong)]')}>
-                  <legend className="px-1">
-                    <label className="flex cursor-pointer items-center gap-2 text-[13px] font-semibold text-ink select-none">
-                      <input type="checkbox" checked={e.enabled} onChange={(ev) => upEnv(env.key, { enabled: ev.target.checked })} className="accent-[var(--accent)]" />
-                      {env.label} <span className="font-mono text-[11px] font-normal text-ink-subtle">{env.short}</span>
-                    </label>
-                  </legend>
+                  <legend className="sr-only">{env.label}</legend>
+                  <Switch
+                    id={`f-${env.key}-enabled`}
+                    checked={e.enabled}
+                    onChange={(enabled) => upEnv(env.key, { enabled })}
+                    label={
+                      <span className="font-semibold">
+                        {env.label} <span className="font-mono text-[11px] font-normal text-ink-subtle">{env.short}</span>
+                      </span>
+                    }
+                  />
                   {e.enabled ? (
-                    <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <Field label="Tipo de base de dados" htmlFor={`f-${env.key}-dbtype`}>
-                        <Input id={`f-${env.key}-dbtype`} list="dbtypes" value={e.dbType} onChange={(ev) => upEnv(env.key, { dbType: ev.target.value })} autoComplete="off" />
+                        <Combobox id={`f-${env.key}-dbtype`} value={e.dbType} onChange={(dbType) => upEnv(env.key, { dbType })} options={infra.db} />
                       </Field>
                       <Field label="Projeto da BD" htmlFor={`f-${env.key}-dbproj`}>
                         <Input id={`f-${env.key}-dbproj`} value={e.dbProject} onChange={(ev) => upEnv(env.key, { dbProject: ev.target.value })} placeholder="sogrape-ai-studio" spellCheck={false} autoComplete="off" />
@@ -385,7 +373,7 @@ export function AppFormPage() {
                         <Input id={`f-${env.key}-dbid`} value={e.dbId} onChange={(ev) => upEnv(env.key, { dbId: ev.target.value })} className="font-mono text-[13px]" spellCheck={false} autoComplete="off" />
                       </Field>
                       <Field label="Alojamento" htmlFor={`f-${env.key}-host`}>
-                        <Input id={`f-${env.key}-host`} list="hostings" value={e.hosting} onChange={(ev) => upEnv(env.key, { hosting: ev.target.value })} autoComplete="off" />
+                        <Combobox id={`f-${env.key}-host`} value={e.hosting} onChange={(hosting) => upEnv(env.key, { hosting })} options={infra.hosting} />
                       </Field>
                       <Field label={`URL da app em ${env.short}`} hint="O endereço onde a app corre neste ambiente." htmlFor={`f-${env.key}-appurl`} className="sm:col-span-2">
                         <Input id={`f-${env.key}-appurl`} type="url" value={e.appUrl} onChange={(ev) => upEnv(env.key, { appUrl: ev.target.value })} placeholder="https://" spellCheck={false} />
@@ -394,9 +382,7 @@ export function AppFormPage() {
                         <Textarea id={`f-${env.key}-notes`} value={e.notes} onChange={(ev) => upEnv(env.key, { notes: ev.target.value })} className="min-h-16" />
                       </Field>
                     </div>
-                  ) : (
-                    <p className="text-[13px] text-ink-subtle">Este ambiente não existe. Ativa a caixa para o descrever.</p>
-                  )}
+                  ) : null}
                 </fieldset>
               )
             })}
@@ -404,7 +390,7 @@ export function AppFormPage() {
 
           <Section id="repositorio" title="Repositório" description="Opcional. Apps feitas no Google AI Studio podem não ter repositório: escolhe Google AI Studio como conta e deixa o URL vazio.">
             <Field label="URL do repositório" htmlFor="f-repo" hint="Opcional.">
-              <Input id="f-repo" type="url" value={form.repo.url} onChange={(e) => up({ repo: { ...form.repo, url: e.target.value } })} placeholder="https://github.com/…" spellCheck={false} />
+              <Input id="f-repo" type="url" value={form.repo.url} onChange={(e) => { const url = e.target.value; const gh = url.match(/github\.com\/([^/\s]+)/i)?.[1]; up({ repo: { ...form.repo, url, owner: gh ?? form.repo.owner } }) }} placeholder="https://github.com/…" spellCheck={false} />
             </Field>
             <div className="flex flex-col gap-1.5">
               <span className="font-display text-[12px] font-medium text-ink-subtle">Conta</span>
@@ -417,7 +403,7 @@ export function AppFormPage() {
               />
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field label="Dono no GitHub" htmlFor="f-owner-gh" hint="Utilizador ou organização.">
+              <Field label="Dono no GitHub" htmlFor="f-owner-gh" hint="Preenchido a partir do URL do GitHub.">
                 <Input id="f-owner-gh" value={form.repo.owner} onChange={(e) => up({ repo: { ...form.repo, owner: e.target.value } })} placeholder="BrunoJusta" spellCheck={false} autoComplete="off" />
               </Field>
               <Field label="Branch principal" htmlFor="f-branch">
@@ -452,17 +438,23 @@ export function AppFormPage() {
               <PersonInput id="f-owner" value={form.owner} onChange={(p) => up({ owner: p })} />
             </Field>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field label="Trata dados pessoais (RGPD)?" htmlFor="f-gdpr">
-                <Select id="f-gdpr" value={form.governance.personalData} onChange={(e) => up({ governance: { ...form.governance, personalData: e.target.value as AppInput['governance']['personalData'] } })}>
-                  {PERSONAL_DATA.map((p) => (
-                    <option key={p.key} value={p.key}>
-                      {p.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Classificação dos dados" htmlFor="f-class">
-                <Input id="f-class" value={form.governance.dataClassification} onChange={(e) => up({ governance: { ...form.governance, dataClassification: e.target.value } })} placeholder="Interno, Confidencial…" autoComplete="off" />
+              <div className="sm:col-span-2">
+                <Switch
+                  id="f-gdpr"
+                  checked={form.governance.personalData === 'sim'}
+                  onChange={(on) => up({ governance: { ...form.governance, personalData: on ? 'sim' : 'nao' } })}
+                  label="Trata dados pessoais (RGPD)"
+                  description={form.governance.personalData === 'por_avaliar' ? 'Ainda por avaliar. Liga ou desliga para registar.' : undefined}
+                />
+              </div>
+              <Field label="Classificação dos dados" htmlFor="f-class" className="sm:col-span-2">
+                <PillPicker<string>
+                  id="f-class"
+                  label="Classificação dos dados"
+                  value={form.governance.dataClassification}
+                  onChange={(v) => up({ governance: { ...form.governance, dataClassification: v === form.governance.dataClassification ? '' : v } })}
+                  options={[...new Set([...DATA_CLASSIFICATIONS, ...(form.governance.dataClassification ? [form.governance.dataClassification] : [])])].map((c) => ({ value: c, label: c }))}
+                />
               </Field>
               <Field label="Custo mensal estimado (€)" htmlFor="f-cost">
                 <Input

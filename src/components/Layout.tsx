@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
-import { Archive, Cube, Kanban, LockKey, LockKeyOpen, MagnifyingGlass, SignOut, Users } from '@phosphor-icons/react'
+import { Briefcase, Cube, Kanban, LockKey, LockKeyOpen, MagnifyingGlass, SignOut, Users } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { useVault } from '../context/VaultContext'
 import { roleLabel } from '../lib/constants'
@@ -101,19 +101,19 @@ export function Layout() {
   const tabs = (
     <>
       <TopTab to="/" end icon={<Kanban size={15} />}>
-        Apps
+        Lifecycle Management
       </TopTab>
-      <TopTab to="/finalizadas" icon={<Archive size={15} />}>
-        Finalizadas
+      <TopTab to="/production-portfolio" icon={<Briefcase size={15} />}>
+        Production Portfolio
       </TopTab>
       {canEdit ? (
-        <TopTab to="/cofre" icon={<LockKey size={15} />}>
-          Cofre
+        <TopTab to="/credentials-vault" icon={<LockKey size={15} />}>
+          Credentials Vault
         </TopTab>
       ) : null}
       {isAdmin ? (
-        <TopTab to="/utilizadores" icon={<Users size={15} />}>
-          Utilizadores
+        <TopTab to="/access-control" icon={<Users size={15} />}>
+          Access Control
         </TopTab>
       ) : null}
     </>
@@ -132,7 +132,7 @@ export function Layout() {
         <div className="flex h-[60px] items-center gap-4" style={{ paddingLeft: 'max(var(--gutter), env(safe-area-inset-left))', paddingRight: 'max(var(--gutter), env(safe-area-inset-right))' }}>
           <NavLink to="/" className="flex shrink-0 items-center gap-2.5 rounded-lg">
             <BrandMark />
-            <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Apps</span>
+            <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Hub</span>
           </NavLink>
           <nav aria-label="Principal" className="ml-2 hidden h-full items-stretch md:flex">
             {tabs}
@@ -155,11 +155,11 @@ export function Layout() {
                 type="button"
                 onClick={vault.lock}
                 aria-pressed="true"
-                title="O cofre está aberto. Clica para bloquear."
+                title="O Credentials Vault está aberto. Clica para bloquear."
                 className="flex h-[34px] items-center gap-1.5 rounded-full bg-warning-soft px-3 font-display text-[13px] font-medium text-warning shadow-[0_0_0_1px_color-mix(in_srgb,var(--warn)_40%,transparent)] transition-transform active:scale-[0.97]"
               >
                 <LockKeyOpen size={14} aria-hidden />
-                <span className="hidden sm:inline">Cofre aberto</span>
+                <span className="hidden sm:inline">Credentials Vault aberto</span>
               </button>
             ) : null}
             <UserMenu />

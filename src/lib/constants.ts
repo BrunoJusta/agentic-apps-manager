@@ -21,15 +21,15 @@ export const REVEAL_SECONDS = 30
 export const ROTATION_WARNING_DAYS = 30
 
 export const STATUSES: { key: StatusKey; label: string; hint: string }[] = [
-  { key: 'ideia', label: 'Ideia', hint: 'Pedido ou oportunidade identificada' },
+  { key: 'ideia', label: 'Idea', hint: 'Pedido ou oportunidade identificada' },
   { key: 'discovery', label: 'Discovery', hint: 'Levantamento com o negócio e protótipo' },
-  { key: 'desenvolvimento', label: 'Em desenvolvimento', hint: 'Construção ativa' },
+  { key: 'desenvolvimento', label: 'In Development', hint: 'Construção ativa' },
   { key: 'qa', label: 'QA / UAT', hint: 'Testes com utilizadores-chave' },
-  { key: 'producao', label: 'Produção', hint: 'Em uso real. Alterações e novos módulos registam-se como pedidos na ficha.' },
-  { key: 'descontinuada', label: 'Descontinuada', hint: 'Desligada ou substituída' },
+  { key: 'producao', label: 'Production', hint: 'Em uso real. Alterações e novos módulos registam-se como pedidos na ficha.' },
+  { key: 'descontinuada', label: 'Shelved', hint: 'Desligada ou substituída' },
 ]
 
-/** Fases que saem do board e vivem na tab Finalizadas. */
+/** Fases que saem do board e vivem na tab Production Portfolio. */
 export const FINISHED_STATUSES: StatusKey[] = ['producao', 'descontinuada']
 export const isFinished = (s: StatusKey) => FINISHED_STATUSES.includes(s)
 
@@ -66,8 +66,10 @@ export const PERSONAL_DATA: { key: PersonalData; label: string }[] = [
   { key: 'nao', label: 'Não' },
 ]
 
+export const DATA_CLASSIFICATIONS = ['Público', 'Interno', 'Confidencial', 'Restrito']
+
 export const ROLES: { key: Role; label: string; hint: string }[] = [
-  { key: 'admin', label: 'Admin', hint: 'Gere utilizadores, cofre e tudo o resto' },
+  { key: 'admin', label: 'Admin', hint: 'Gere utilizadores, Credentials Vault e tudo o resto' },
   { key: 'editor', label: 'Editor', hint: 'Cria e edita apps; pode receber acesso aos secrets' },
   { key: 'viewer', label: 'Viewer', hint: 'Vê o board e as fichas, nunca os secrets' },
 ]
@@ -120,7 +122,6 @@ export function emptyApp(): AppInput {
     owner: { name: '', email: '' },
     startDate: '',
     goLiveDate: '',
-    activeUsers: null,
     stack: { frontend: [], backend: [], llm: [], frameworks: [], auth: '' },
     environments: { dev: emptyEnvironment(true), qa: emptyEnvironment(), prod: emptyEnvironment() },
     repo: { url: '', account: '', owner: '', branch: 'main' },

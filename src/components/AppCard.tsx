@@ -1,12 +1,11 @@
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
-import { ArrowUp, CaretDoubleUp, ChatCircleText, ClockCountdown, GithubLogo, Sparkle, UsersThree } from '@phosphor-icons/react'
+import { ArrowUp, CaretDoubleUp, ChatCircleText, ClockCountdown, GithubLogo, Sparkle } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import type { AgenticApp } from '../lib/types'
 import { allTags, daysUntil } from '../lib/app-utils'
 import { ENVS, isRequestOpen, maturityLabel, priorityLabel, ROTATION_WARNING_DAYS, statusLabel } from '../lib/constants'
 import { areaColor, entityStyle, STATUS_COLORS } from '../lib/colors'
-import { fmtNumber } from '../lib/format'
 import { trackSpotlight } from '../lib/spotlight'
 import { Badge } from './ui'
 
@@ -102,12 +101,6 @@ export function AppCardBody({ app, secrets, showStatus }: { app: AgenticApp; sec
           <span className="flex items-center gap-1" title={app.repo.account === 'sogrape' ? 'Repositório na organização Sogrape' : app.repo.account === 'ai_studio' ? 'Código no Google AI Studio' : 'Repositório em conta pessoal'}>
             {app.repo.account === 'ai_studio' ? <Sparkle size={12} aria-hidden /> : <GithubLogo size={12} aria-hidden />}
             {app.repo.account === 'sogrape' ? 'Sogrape' : app.repo.account === 'ai_studio' ? 'AI Studio' : 'Pessoal'}
-          </span>
-        ) : null}
-        {app.activeUsers ? (
-          <span className="flex items-center gap-1 font-mono tabular" title="Utilizadores ativos">
-            <UsersThree size={12} aria-hidden />
-            {fmtNumber(app.activeUsers)}
           </span>
         ) : null}
         {openReq ? (

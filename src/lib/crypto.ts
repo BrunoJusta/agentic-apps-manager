@@ -1,12 +1,12 @@
 /**
- * Criptografia do cofre. Tudo corre no browser com WebCrypto; o Firestore só vê texto cifrado.
+ * Criptografia do Credentials Vault. Tudo corre no browser com WebCrypto; o Firestore só vê texto cifrado.
  *
  * Modelo:
  *  - Cada utilizador tem um par RSA-OAEP 3072 (SHA-256). A chave privada é cifrada com
  *    AES-256-GCM, com chave derivada da passphrase pessoal por PBKDF2-SHA256 (600 000 iterações).
- *  - Existe uma chave do cofre (AES-256-GCM) global. Para cada pessoa com acesso, essa chave é
+ *  - Existe uma chave do Credentials Vault (AES-256-GCM) global. Para cada pessoa com acesso, essa chave é
  *    "embrulhada" (wrapKey) com a chave pública dela e guardada em vaultGrants/{email}.
- *  - Cada secret é cifrado com a chave do cofre, IV aleatório de 96 bits e AAD igual ao caminho
+ *  - Cada secret é cifrado com a chave do Credentials Vault, IV aleatório de 96 bits e AAD igual ao caminho
  *    do documento, para que não se possa trocar texto cifrado entre documentos.
  */
 
@@ -105,7 +105,7 @@ export async function openPrivateKey(enc: { salt: string; iv: string; ct: string
   return crypto.subtle.importKey('pkcs8', pkcs8, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['unwrapKey'])
 }
 
-/** Chave do cofre. Fica extraível em memória porque é preciso embrulhá-la para dar acesso a outros. */
+/** Chave do Credentials Vault. Fica extraível em memória porque é preciso embrulhá-la para dar acesso a outros. */
 export async function generateVaultKey(): Promise<CryptoKey> {
   return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'])
 }
@@ -148,7 +148,7 @@ export async function verifyVaultCheck(key: CryptoKey, check: { iv: string; ct: 
 
 /** AAD de um secret: o caminho do documento. */
 export const secretAad = (appId: string, secretId: string) => `apps/${appId}/secrets/${secretId}`
-/** AAD dos itens do cofre: o valor fica preso ao documento onde foi gravado. */
+/** AAD dos itens do Credentials Vault: o valor fica preso ao documento onde foi gravado. */
 export const vaultItemAad = (itemId: string) => `vaultItems/${itemId}`
 
 /** Regras mínimas de passphrase: 12+ caracteres. */

@@ -20,7 +20,6 @@ import {
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { changedFields, normalizeApp } from '../lib/app-utils'
-import { statusLabel, maturityLabel } from '../lib/constants'
 import {
   decryptString,
   encryptString,
@@ -37,7 +36,6 @@ import type {
   AuditAction,
   AuditEntry,
   EnvKey,
-  HistoryEntry,
   MaturityKey,
   Role,
   SecretDoc,
@@ -86,16 +84,6 @@ export function subscribeApps(cb: (apps: AgenticApp[]) => void, onErr?: Err): Un
   )
 }
 
-async function addHistory(appId: string, actor: Actor, action: string, summary: string) {
-  await addDoc(collection(db, 'apps', appId, 'history'), {
-    at: serverTimestamp(),
-    by: actor.email,
-    byName: actor.name,
-    action,
-    summary,
-  })
-}
-
 export async function createApp(input: AppInput, actor: Actor): Promise<string> {
   const ref = await addDoc(collection(db, 'apps'), {
     ...input,
@@ -104,7 +92,6 @@ export async function createApp(input: AppInput, actor: Actor): Promise<string> 
     updatedAt: serverTimestamp(),
     updatedBy: actor.email,
   })
-  await addHistory(ref.id, actor, 'create', 'Criou a app')
   return ref.id
 }
 
@@ -116,16 +103,11 @@ export async function updateApp(id: string, before: AppInput, after: AppInput, a
   if (!fields.length) return
   const legacy = Object.fromEntries(LEGACY_FIELDS.map((k) => [k, deleteField()]))
   await updateDoc(doc(db, 'apps', id), { ...after, ...legacy, updatedAt: serverTimestamp(), updatedBy: actor.email })
-  await addHistory(id, actor, 'update', `Alterou ${fields.join(', ')}`)
 }
 
 export async function moveApp(app: AgenticApp, field: 'status' | 'maturity', value: StatusKey | MaturityKey, actor: Actor) {
   if (app[field] === value) return
   await updateDoc(doc(db, 'apps', app.id), { [field]: value, updatedAt: serverTimestamp(), updatedBy: actor.email })
-  const label = field === 'status' ? statusLabel : maturityLabel
-  const from = label(app[field] as never)
-  const to = label(value as never)
-  await addHistory(app.id, actor, field, `${field === 'status' ? 'Estado' : 'Maturidade'}: ${from} → ${to}`)
 }
 
 
@@ -152,14 +134,6 @@ export async function deleteApp(app: AgenticApp, actor: Actor) {
   await logAudit(actor, 'app_delete', { appId: app.id, appName: app.name })
 }
 
-export function subscribeHistory(appId: string, cb: (rows: HistoryEntry[]) => void, onErr?: Err): Unsubscribe {
-  return onSnapshot(
-    query(collection(db, 'apps', appId, 'history'), orderBy('at', 'desc'), limit(200)),
-    (s) => cb(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<HistoryEntry, 'id'>) }))),
-    onErr,
-  )
-}
-
 /* ---------- Pedidos (alterações, updates, novos módulos, bugs) ---------- */
 
 /** Todos os pedidos de todas as apps (para contagens e listas). Qualquer utilizador ativo lê. */
@@ -178,29 +152,25 @@ export async function saveRequest(input: RequestInput, actor: Actor) {
   const clean = { ...data, title: data.title.trim(), description: data.description.trim(), updatedAt: serverTimestamp(), updatedBy: actor.email }
   if (id) {
     await updateDoc(doc(db, 'apps', input.appId, 'requests', id), clean)
-    await addHistory(input.appId, actor, 'request', `Atualizou o pedido “${clean.title}”`)
   } else {
     await addDoc(collection(db, 'apps', input.appId, 'requests'), { ...clean, createdAt: serverTimestamp(), createdBy: actor.email })
-    await addHistory(input.appId, actor, 'request', `Registou o pedido “${clean.title}”`)
   }
 }
 
 export async function setRequestStatus(r: AppRequest, status: AppRequest['status'], label: string, actor: Actor) {
   if (r.status === status) return
   await updateDoc(doc(db, 'apps', r.appId, 'requests', r.id), { status, updatedAt: serverTimestamp(), updatedBy: actor.email })
-  await addHistory(r.appId, actor, 'request', `Pedido “${r.title}”: ${label}`)
 }
 
 export async function deleteRequest(r: AppRequest, actor: Actor) {
   await deleteDoc(doc(db, 'apps', r.appId, 'requests', r.id))
-  await addHistory(r.appId, actor, 'request', `Apagou o pedido “${r.title}”`)
 }
 
 /* ---------- Secrets ---------- */
 
 const toSecret = (id: string, data: Record<string, unknown>) => ({ id, ...(data as Omit<SecretDoc, 'id'>) })
 
-/** Secrets no formato antigo (dentro de cada app). Só servem para a migração para o cofre. */
+/** Secrets no formato antigo (dentro de cada app). Só servem para a migração para o Credentials Vault. */
 export function subscribeSecretsIndex(cb: (rows: SecretDoc[]) => void, onErr?: Err): Unsubscribe {
   return onSnapshot(
     collectionGroup(db, 'secrets'),
@@ -209,7 +179,7 @@ export function subscribeSecretsIndex(cb: (rows: SecretDoc[]) => void, onErr?: E
   )
 }
 
-/* ---------- Itens do cofre (variáveis e secrets partilhados) ---------- */
+/* ---------- Itens do Credentials Vault (variáveis e secrets partilhados) ---------- */
 
 const toItem = (id: string, data: Record<string, unknown>): VaultItem => ({
   id,
@@ -227,7 +197,7 @@ const toItem = (id: string, data: Record<string, unknown>): VaultItem => ({
   updatedBy: data.updatedBy as string | undefined,
 })
 
-/** Todos os itens do cofre (nomes e metadados; valores cifrados). Só Editors e Admins. */
+/** Todos os itens do Credentials Vault (nomes e metadados; valores cifrados). Só Editors e Admins. */
 export function subscribeVaultItems(cb: (rows: VaultItem[]) => void, onErr?: Err): Unsubscribe {
   return onSnapshot(collection(db, 'vaultItems'), (s) => cb(s.docs.map((d) => toItem(d.id, d.data()))), onErr)
 }
@@ -243,7 +213,7 @@ export interface VaultItemInput {
   value?: string
 }
 
-/** Cria ou atualiza um item do cofre. Devolve o id. */
+/** Cria ou atualiza um item do Credentials Vault. Devolve o id. */
 export async function saveVaultItem(input: VaultItemInput, vaultKey: CryptoKey, version: number, actor: Actor): Promise<string> {
   const ref = input.id ? doc(db, 'vaultItems', input.id) : doc(collection(db, 'vaultItems'))
   const meta: Record<string, unknown> = {
@@ -282,14 +252,13 @@ export async function deleteVaultItem(item: VaultItem, apps: AgenticApp[], actor
   }
   await b.commit()
   await logAudit(actor, 'secret_delete', { target: item.name, detail: `${item.kind === 'variable' ? 'variável' : 'secret'}, tirado de ${touched.length} ambiente(s)` })
-  for (const t of touched) await addHistory(t.app.id, actor, 'vault', `${item.name} foi apagado do cofre e saiu de ${t.env.toUpperCase()}`)
 }
 
 export async function revealVaultItem(item: VaultItem, vaultKey: CryptoKey): Promise<string> {
   return decryptString(vaultKey, { iv: item.iv, ct: item.ct }, vaultItemAad(item.id))
 }
 
-/** Liga itens do cofre a um ambiente de uma app (só guarda os ids). */
+/** Liga itens do Credentials Vault a um ambiente de uma app (só guarda os ids). */
 export async function linkVaultItems(app: AgenticApp, env: EnvKey, items: VaultItem[], actor: Actor) {
   if (!items.length) return
   await updateDoc(doc(db, 'apps', app.id), {
@@ -298,7 +267,6 @@ export async function linkVaultItems(app: AgenticApp, env: EnvKey, items: VaultI
     updatedBy: actor.email,
   })
   await logAudit(actor, 'vault_link', { appId: app.id, appName: app.name, env, target: items.map((i) => i.name).join(', ') })
-  await addHistory(app.id, actor, 'vault', `Ligou ${items.map((i) => i.name).join(', ')} do cofre (${env.toUpperCase()})`)
 }
 
 export async function unlinkVaultItem(app: AgenticApp, env: EnvKey, item: { id: string; name: string }, actor: Actor) {
@@ -308,12 +276,11 @@ export async function unlinkVaultItem(app: AgenticApp, env: EnvKey, item: { id: 
     updatedBy: actor.email,
   })
   await logAudit(actor, 'vault_unlink', { appId: app.id, appName: app.name, env, target: item.name })
-  await addHistory(app.id, actor, 'vault', `Desligou ${item.name} (${env.toUpperCase()}). O item continua no cofre.`)
 }
 
 /**
  * Migra o modelo antigo (secrets dentro de cada app e variáveis em texto simples)
- * para itens do cofre ligados às mesmas apps e ambientes. Uma escrita atómica por app.
+ * para itens do Credentials Vault ligados às mesmas apps e ambientes. Uma escrita atómica por app.
  */
 export async function migrateLegacyToVault(apps: AgenticApp[], legacy: SecretDoc[], vaultKey: CryptoKey, version: number, actor: Actor, onProgress?: (msg: string) => void) {
   let nItems = 0
@@ -350,7 +317,6 @@ export async function migrateLegacyToVault(apps: AgenticApp[], legacy: SecretDoc
       b.update(doc(db, 'apps', app.id), upd)
     }
     await b.commit()
-    if (app) await addHistory(app.id, actor, 'vault', 'Variáveis e secrets passaram para o cofre (migração)')
   }
   await logAudit(actor, 'vault_migrate', { detail: `${nItems} itens, ${ids.size} apps` })
   return nItems
@@ -416,7 +382,7 @@ export async function saveMyKeys(email: string, keys: Omit<UserKeys, 'email' | '
   await logAudit(actor, 'keys_create', { target: email })
 }
 
-/** Apaga as chaves de alguém (o próprio, ou um Admin) e o acesso ao cofre que dependia delas. */
+/** Apaga as chaves de alguém (o próprio, ou um Admin) e o acesso ao Credentials Vault que dependia delas. */
 export async function resetKeys(email: string, actor: Actor) {
   const b = writeBatch(db)
   b.delete(doc(db, 'vaultGrants', email))
@@ -425,7 +391,7 @@ export async function resetKeys(email: string, actor: Actor) {
   await logAudit(actor, 'keys_reset', { target: email })
 }
 
-/* ---------- Cofre ---------- */
+/* ---------- Credentials Vault ---------- */
 
 export function subscribeVaultMeta(cb: (m: VaultMeta | null) => void, onErr?: Err): Unsubscribe {
   return onSnapshot(
@@ -447,7 +413,7 @@ export function subscribeGrants(cb: (rows: VaultGrant[]) => void, onErr?: Err): 
   return onSnapshot(collection(db, 'vaultGrants'), (s) => cb(s.docs.map((d) => d.data() as VaultGrant)), onErr)
 }
 
-/** Cria a chave do cofre e dá acesso ao próprio Admin. Devolve a chave para ficar desbloqueado. */
+/** Cria a chave do Credentials Vault e dá acesso ao próprio Admin. Devolve a chave para ficar desbloqueado. */
 export async function initVault(actor: Actor, myPublicKey: string): Promise<CryptoKey> {
   const key = await generateVaultKey()
   const check = await makeVaultCheck(key)
@@ -478,7 +444,7 @@ export async function revokeVault(email: string, actor: Actor) {
 }
 
 /**
- * Roda a chave do cofre: decifra todos os secrets com a chave atual, cifra com uma nova,
+ * Roda a chave do Credentials Vault: decifra todos os secrets com a chave atual, cifra com uma nova,
  * e volta a embrulhar a nova chave para quem tem acesso (exceto quem se quer excluir).
  * Tudo vai num único batch atómico.
  */
@@ -490,9 +456,9 @@ export async function rotateVault(
   actor: Actor,
   onProgress?: (msg: string) => void,
 ): Promise<CryptoKey> {
-  onProgress?.('A ler o cofre…')
+  onProgress?.('A ler o Credentials Vault…')
   const legacy = await getDocs(collectionGroup(db, 'secrets'))
-  if (!legacy.empty) throw new Error(`Ainda há ${legacy.size} secrets no formato antigo. Migra-os no Cofre antes de rodar a chave.`)
+  if (!legacy.empty) throw new Error(`Ainda há ${legacy.size} secrets no formato antigo. Migra-os no Credentials Vault antes de rodar a chave.`)
   const snap = await getDocs(collection(db, 'vaultItems'))
   const newKey = await generateVaultKey()
   const newVersion = oldVersion + 1
@@ -518,7 +484,7 @@ export async function rotateVault(
   // Tem de ser um único batch (atómico): ou tudo passa para a chave nova, ou nada muda.
   // Um batch do Firestore aceita até 500 escritas.
   if (ops.length + grantOps.length + 1 > 500) {
-    throw new Error(`Há ${ops.length} itens no cofre e ${grantOps.length} acessos; a rotação atómica suporta até 500 escritas no total.`)
+    throw new Error(`Há ${ops.length} itens no Credentials Vault e ${grantOps.length} acessos; a rotação atómica suporta até 500 escritas no total.`)
   }
   onProgress?.('A gravar…')
   const b = writeBatch(db)

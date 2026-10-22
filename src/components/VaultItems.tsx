@@ -34,7 +34,7 @@ export function RotationBadge({ rotateBy }: { rotateBy: string }) {
   )
 }
 
-/* ---------------- Linha de item (página do Cofre) ---------------- */
+/* ---------------- Linha de item (página do Credentials Vault) ---------------- */
 
 export function VaultItemRow({ item, uses, onEdit, onDelete, requestUnlock }: { item: VaultItem; uses: ItemUse[]; onEdit: () => void; onDelete: () => void; requestUnlock: () => void }) {
   const vault = useVault()
@@ -180,14 +180,14 @@ export function VaultItemDialog({
     const n = name.trim()
     if (!VAULT_NAME_RE.test(n)) return setErr('Usa letras, números e _ (ex.: GEMINI_API_KEY).')
     if (!editing && !value) return setErr('Falta o valor.')
-    if (!vault.key || !vault.meta) return setErr('O cofre está bloqueado.')
+    if (!vault.key || !vault.meta) return setErr('O Credentials Vault está bloqueado.')
     setBusy(true)
     try {
       const id = await saveVaultItem({ id: editing?.id, name: n, kind, type, note, rotateBy, value: value || undefined }, vault.key, vault.meta.version, actor)
       if (!editing && linkTo) {
         await linkVaultItems(linkTo.app, linkTo.env, [{ id, name: n } as VaultItem], actor)
       }
-      toast(editing ? `${n} atualizado.` : linkTo ? `${n} criado no cofre e ligado a ${linkTo.app.name} (${linkTo.env.toUpperCase()}).` : `${n} guardado e cifrado no cofre.`)
+      toast(editing ? `${n} atualizado.` : linkTo ? `${n} criado no Credentials Vault e ligado a ${linkTo.app.name} (${linkTo.env.toUpperCase()}).` : `${n} guardado e cifrado no Credentials Vault.`)
       onSaved?.(id)
       onClose()
     } catch (e2) {
@@ -203,10 +203,10 @@ export function VaultItemDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={editing ? `Editar ${editing.name}` : 'Novo item no cofre'}
+      title={editing ? `Editar ${editing.name}` : 'Novo item no Credentials Vault'}
       description={
         linkTo && !editing
-          ? `Fica guardado no cofre e ligado a ${linkTo.app.name} (${linkTo.env.toUpperCase()}). O valor é cifrado no teu browser antes de sair daqui.`
+          ? `Fica guardado no Credentials Vault e ligado a ${linkTo.app.name} (${linkTo.env.toUpperCase()}). O valor é cifrado no teu browser antes de sair daqui.`
           : 'O valor é cifrado no teu browser antes de sair daqui. Nas fichas das apps só aparece o nome.'
       }
       footer={
@@ -215,7 +215,7 @@ export function VaultItemDialog({
             Cancelar
           </Button>
           <Button variant="primary" type="submit" form="vault-item-form" loading={busy}>
-            {editing ? 'Guardar' : 'Guardar no cofre'}
+            {editing ? 'Guardar' : 'Guardar no Credentials Vault'}
           </Button>
         </>
       }
@@ -279,7 +279,7 @@ export function VaultItemDialog({
   )
 }
 
-/* ---------------- Escolher itens do cofre para uma app ---------------- */
+/* ---------------- Escolher itens do Credentials Vault para uma app ---------------- */
 
 export function VaultPickerDialog({ open, onClose, app, env, uses, onCreateNew }: { open: boolean; onClose: () => void; app: AgenticApp; env: EnvKey; uses: Map<string, ItemUse[]>; onCreateNew: () => void }) {
   const vault = useVault()
@@ -328,12 +328,12 @@ export function VaultPickerDialog({ open, onClose, app, env, uses, onCreateNew }
       open={open}
       onClose={onClose}
       size="lg"
-      title={`Ligar do cofre a ${env.toUpperCase()}`}
-      description="Escolhe pelo nome. A app só guarda a ligação; o valor continua cifrado no cofre."
+      title={`Ligar do Credentials Vault a ${env.toUpperCase()}`}
+      description="Escolhe pelo nome. A app só guarda a ligação; o valor continua cifrado no Credentials Vault."
       footer={
         <>
           <Button variant="ghost" className="mr-auto" onClick={onCreateNew}>
-            Criar novo no cofre
+            Criar novo no Credentials Vault
           </Button>
           <Button variant="ghost" onClick={onClose}>
             Cancelar
@@ -347,13 +347,13 @@ export function VaultPickerDialog({ open, onClose, app, env, uses, onCreateNew }
       <div className="flex flex-col gap-3">
         <div className="relative">
           <MagnifyingGlass size={14} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-tertiary" aria-hidden />
-          <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Procurar pelo nome ou pela nota" aria-label="Procurar no cofre" className="pl-8" spellCheck={false} autoFocus />
+          <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Procurar pelo nome ou pela nota" aria-label="Procurar no Credentials Vault" className="pl-8" spellCheck={false} autoFocus />
         </div>
         <div className="max-h-[50vh] overflow-y-auto rounded-card shadow-e2">
           {!vault.itemsLoaded ? (
             <p className="px-4 py-6 text-center text-sm text-ink-subtle">A carregar…</p>
           ) : rows.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-ink-subtle">{vault.items.length ? 'Nada por ligar com este nome.' : 'O cofre ainda está vazio. Cria o primeiro item.'}</p>
+            <p className="px-4 py-6 text-center text-sm text-ink-subtle">{vault.items.length ? 'Nada por ligar com este nome.' : 'O Credentials Vault ainda está vazio. Cria o primeiro item.'}</p>
           ) : (
             <ul className="divide-y divide-hairline">
               {rows.map((i) => {
@@ -383,7 +383,7 @@ export function VaultPickerDialog({ open, onClose, app, env, uses, onCreateNew }
   )
 }
 
-/* ---------------- Importar .env para o cofre ---------------- */
+/* ---------------- Importar .env para o Credentials Vault ---------------- */
 
 export function ImportEnvDialog({ open, onClose, apps, initialTarget }: { open: boolean; onClose: () => void; apps: AgenticApp[]; initialTarget?: { appId: string; env: EnvKey } | null }) {
   const vault = useVault()
@@ -440,7 +440,7 @@ export function ImportEnvDialog({ open, onClose, apps, initialTarget }: { open: 
       }
       if (app && toLink.length) await linkVaultItems(app, env, toLink, actor)
       await logAudit(actor, 'import_env', { appId: app?.id, appName: app?.name, env: app ? env : undefined, detail: `${created} criados, ${updated} atualizados` })
-      toast(`Importado para o cofre: ${created} novos e ${updated} atualizados${app ? `, ligados a ${app.name} (${env.toUpperCase()})` : ''}.`)
+      toast(`Importado para o Credentials Vault: ${created} novos e ${updated} atualizados${app ? `, ligados a ${app.name} (${env.toUpperCase()})` : ''}.`)
       onClose()
     } catch (e) {
       toast(`A importação parou: ${(e as Error).message}`, 'error')
@@ -455,11 +455,11 @@ export function ImportEnvDialog({ open, onClose, apps, initialTarget }: { open: 
       open={open}
       onClose={onClose}
       size="lg"
-      title="Importar .env para o cofre"
+      title="Importar .env para o Credentials Vault"
       description="Cola o conteúdo do ficheiro. Tudo é cifrado no teu browser antes de ser gravado. Se escolheres uma app, os itens ficam ligados a ela."
       footer={
         <>
-          {!vault.key ? <span className="mr-auto text-[13px] text-warning">Desbloqueia o cofre para importar.</span> : null}
+          {!vault.key ? <span className="mr-auto text-[13px] text-warning">Desbloqueia o Credentials Vault para importar.</span> : null}
           <Button variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
@@ -473,7 +473,7 @@ export function ImportEnvDialog({ open, onClose, apps, initialTarget }: { open: 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_180px]">
           <Field label="Ligar a uma app (opcional)" htmlFor="imp-app">
             <Select id="imp-app" value={appId} onChange={(e) => setAppId(e.target.value)}>
-              <option value="">Só guardar no cofre</option>
+              <option value="">Só guardar no Credentials Vault</option>
               {apps.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}

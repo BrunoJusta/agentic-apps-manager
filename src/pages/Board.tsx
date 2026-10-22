@@ -14,14 +14,14 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { DownloadSimple, Kanban, Plus, RocketLaunch, Rows, UploadSimple, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { Kanban, Plus, RocketLaunch, Rows, UploadSimple, CheckCircle, XCircle } from '@phosphor-icons/react'
 import { useApps } from '../context/AppsContext'
 import { useAuth } from '../context/AuthContext'
 import { useVault } from '../context/VaultContext'
 import { linkedItems } from '../lib/vault-utils'
 import { useToast } from '../context/ToastContext'
 import { applyFilters, useFilters, type ViewMode } from '../lib/filters'
-import { productionReadiness, sortForBoard, toInput } from '../lib/app-utils'
+import { productionReadiness, sortForBoard } from '../lib/app-utils'
 import { isFinished, MATURITIES, REPO_ACCOUNTS, STATUSES, statusLabel } from '../lib/constants'
 import { moveApp } from '../data/store'
 import type { AgenticApp, MaturityKey, StatusKey, VaultItem } from '../lib/types'
@@ -63,14 +63,14 @@ function DraggableCard({ app, secrets, index, disabled, animate }: { app: Agenti
   )
 }
 
-/** Zona para largar uma app e passá-la a Produção (sai do board para Finalizadas). */
+/** Zona para largar uma app e passá-la a Production (sai do board para o Production Portfolio). */
 function ProductionDropZone({ active }: { active: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'producao' })
   return (
-    <section aria-label="Passar a Produção" className="flex w-44 shrink-0 flex-col">
+    <section aria-label="Passar a Production" className="flex w-44 shrink-0 flex-col">
       <header className="flex h-10 items-center gap-2 px-1.5">
         <Dot color={STATUS_COLORS.producao} />
-        <h2 className="font-display text-[13.5px] font-semibold tracking-[-0.01em] whitespace-nowrap text-ink">Produção</h2>
+        <h2 className="font-display text-[13.5px] font-semibold tracking-[-0.01em] whitespace-nowrap text-ink">Production</h2>
       </header>
       <div
         ref={setNodeRef}
@@ -80,9 +80,9 @@ function ProductionDropZone({ active }: { active: boolean }) {
         )}
       >
         <RocketLaunch size={20} className={isOver ? 'text-ink' : 'text-ink-tertiary'} aria-hidden />
-        <p className="text-[12px] text-ink-subtle">{active ? 'Larga aqui para passar a Produção' : 'Arrasta uma app para aqui quando entrar em produção'}</p>
-        <Link to="/finalizadas" className="font-display text-[12px] font-medium text-ink-subtle underline decoration-hairline-strong underline-offset-2 hover:text-ink">
-          Ver em Finalizadas
+        <p className="text-[12px] text-ink-subtle">{active ? 'Larga aqui para passar a Production' : 'Arrasta uma app para aqui quando entrar em Production'}</p>
+        <Link to="/production-portfolio" className="font-display text-[12px] font-medium text-ink-subtle underline decoration-hairline-strong underline-offset-2 hover:text-ink">
+          Ver no Production Portfolio
         </Link>
       </div>
     </section>
@@ -162,7 +162,7 @@ export function AppsPage() {
     return m
   }, [apps, itemsById])
 
-  // O board só mostra apps em curso; Produção e Descontinuada vivem na tab Finalizadas.
+  // O board só mostra apps em curso; Production e Shelved vivem no Production Portfolio.
   const activeApps = useMemo(() => apps.filter((a) => !isFinished(a.status)), [apps])
   const finishedCount = apps.length - activeApps.length
 
@@ -190,7 +190,7 @@ export function AppsPage() {
     withTransition(() => setOverride((o) => ({ ...o, [app.id]: value })))
     try {
       await moveApp(app, field, value as StatusKey | MaturityKey, actor)
-      if (field === 'status' && isFinished(value as StatusKey)) toast(`${app.name} passou a ${statusLabel(value as StatusKey)} e está agora em Finalizadas.`)
+      if (field === 'status' && isFinished(value as StatusKey)) toast(`${app.name} passou a ${statusLabel(value as StatusKey)} e está agora no Production Portfolio.`)
     } catch (e) {
       withTransition(() =>
         setOverride((o) => {
@@ -219,19 +219,9 @@ export function AppsPage() {
     commitMove(app, target)
   }
 
-  const exportJson = () => {
-    const data = JSON.stringify({ exportedAt: new Date().toISOString(), apps: apps.map((a) => ({ id: a.id, ...toInput(a) })) }, null, 2)
-    const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `agentic-apps-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   const header = (
     <PageHeader
-      title="Apps"
+      title="Lifecycle Management"
       description={
         loading ? undefined : (
           <>
@@ -240,8 +230,8 @@ export function AppsPage() {
             {finishedCount ? (
               <>
                 {' '}
-                <Link to="/finalizadas" className="underline decoration-hairline-strong underline-offset-2 hover:text-ink hover:decoration-ink">
-                  {finishedCount} {finishedCount === 1 ? 'finalizada' : 'finalizadas'}
+                <Link to="/production-portfolio" className="underline decoration-hairline-strong underline-offset-2 hover:text-ink hover:decoration-ink">
+                  {finishedCount} no Production Portfolio
                 </Link>
                 .
               </>
@@ -257,10 +247,6 @@ export function AppsPage() {
               Importar
             </Button>
           ) : null}
-          <Button variant="secondary" onClick={exportJson} disabled={!apps.length} className="hidden sm:inline-flex">
-            <DownloadSimple size={14} aria-hidden />
-            Exportar
-          </Button>
           {canEdit ? (
             <Button variant="primary" onClick={() => navigate("/apps/nova")}>
               <Plus size={14} weight="bold" aria-hidden />
@@ -380,8 +366,8 @@ export function AppsPage() {
       <Dialog
         open={!!gate}
         onClose={() => setGate(null)}
-        title={`${gate?.app.name ?? ''} ainda não está pronta para Produção`}
-        description="Para passar para Produção, a ficha tem de ter o owner e o ambiente de produção preenchidos. O repositório é opcional."
+        title={`${gate?.app.name ?? ''} ainda não está pronta para Production`}
+        description="Para passar para Production, a ficha tem de ter o owner e o ambiente de produção preenchidos. O repositório é opcional."
         footer={
           <>
             <Button variant="ghost" onClick={() => setGate(null)}>

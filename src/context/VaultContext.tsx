@@ -17,7 +17,7 @@ import {
 export type VaultStatus =
   | 'unavailable' // Viewer: nunca vê secrets
   | 'loading'
-  | 'not-initialized' // ainda não existe chave do cofre
+  | 'not-initialized' // ainda não existe chave do Credentials Vault
   | 'no-keys' // o utilizador ainda não criou as chaves pessoais
   | 'no-grant' // tem chaves, mas ninguém lhe deu acesso
   | 'stale-grant' // o acesso é de uma versão antiga da chave (houve rotação)
@@ -29,7 +29,7 @@ interface VaultState {
   meta: VaultMeta | null
   myKeys: UserKeys | null
   key: CryptoKey | null
-  /** Itens do cofre (variáveis e secrets). Só nomes e metadados; os valores estão cifrados. */
+  /** Itens do Credentials Vault (variáveis e secrets). Só nomes e metadados; os valores estão cifrados. */
   items: VaultItem[]
   itemsById: Map<string, VaultItem>
   itemsLoaded: boolean
@@ -120,7 +120,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
 
   const unlock = useCallback(
     async (passphrase: string) => {
-      if (!myKeys || !grant || !meta) throw new Error('O cofre não está pronto para desbloquear.')
+      if (!myKeys || !grant || !meta) throw new Error('O Credentials Vault não está pronto para desbloquear.')
       const priv = await openPrivateKey(myKeys.encPrivateKey, passphrase)
       const k = await unwrapVaultKey(grant.wrappedKey, priv)
       if (!(await verifyVaultCheck(k, meta.check))) throw new Error('A chave que recebeste não corresponde à atual. Pede a um Admin para te dar acesso outra vez.')
@@ -141,7 +141,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
 
   const initialize = useCallback(
     async (passphrase: string) => {
-      if (!isAdmin) throw new Error('Só um Admin pode inicializar o cofre.')
+      if (!isAdmin) throw new Error('Só um Admin pode inicializar o Credentials Vault.')
       let publicKey = myKeys?.publicKey
       if (myKeys) {
         await openPrivateKey(myKeys.encPrivateKey, passphrase) // confirma a passphrase

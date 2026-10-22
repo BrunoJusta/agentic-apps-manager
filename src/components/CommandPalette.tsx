@@ -56,8 +56,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             id: `i-${it.id}`,
             kind: it.kind,
             title: it.name,
-            subtitle: `${it.kind === 'secret' ? 'Secret' : 'Variável'} no cofre${u.length ? `, ligado a ${u.map((x) => `${x.app.name} (${x.env.toUpperCase()})`).join(', ')}` : ''}`,
-            to: `/cofre?q=${encodeURIComponent(it.name)}#item-${it.id}`,
+            subtitle: `${it.kind === 'secret' ? 'Secret' : 'Variável'} no Credentials Vault${u.length ? `, ligado a ${u.map((x) => `${x.app.name} (${x.env.toUpperCase()})`).join(', ')}` : ''}`,
+            to: `/credentials-vault?q=${encodeURIComponent(it.name)}#item-${it.id}`,
           })
         }
       }
@@ -146,7 +146,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
               ))
             )}
           </ul>
-          <p className="border-t border-hairline px-4 py-2 text-[11px] text-ink-subtle">A pesquisa usa só nomes. Os valores do cofre nunca são pesquisáveis.</p>
+          <p className="border-t border-hairline px-4 py-2 text-[11px] text-ink-subtle">A pesquisa usa só nomes. Os valores do Credentials Vault nunca são pesquisáveis.</p>
         </div>
       ) : null}
     </dialog>

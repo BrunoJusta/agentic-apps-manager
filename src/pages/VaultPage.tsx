@@ -60,7 +60,7 @@ export function VaultPage() {
     setMigrating('A começar…')
     try {
       const n = await migrateLegacyToVault(apps, vault.legacySecrets, vault.key, vault.meta.version, actor, setMigrating)
-      toast(`${n} itens passaram para o cofre e ficaram ligados às mesmas apps e ambientes.`)
+      toast(`${n} itens passaram para o Credentials Vault e ficaram ligados às mesmas apps e ambientes.`)
     } catch (e) {
       toast(`A migração parou: ${(e as Error).message}`, 'error')
     } finally {
@@ -73,7 +73,7 @@ export function VaultPage() {
   return (
     <>
       <PageHeader
-        title="Cofre"
+        title="Credentials Vault"
         description="Todas as variáveis e secrets das apps vivem aqui, cifrados no browser com AES-256-GCM. Cria-os aqui e liga-os às apps; nas fichas só aparece o nome."
         actions={
           canEdit && vault.status !== 'unavailable' ? (
@@ -101,11 +101,11 @@ export function VaultPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-[15px] font-semibold text-ink">Há {legacyTotal} itens no formato antigo</p>
                   <p className="text-[13px] text-ink-muted">
-                    {legacyVars} variáveis em texto simples e {vault.legacySecrets.length} secrets guardados dentro das apps. A migração cifra-os no cofre e liga-os às mesmas apps e ambientes. A rotação de chave só funciona depois disto.
+                    {legacyVars} variáveis em texto simples e {vault.legacySecrets.length} secrets guardados dentro das apps. A migração cifra-os no Credentials Vault e liga-os às mesmas apps e ambientes. A rotação de chave só funciona depois disto.
                   </p>
                 </div>
                 <Button variant="primary" onClick={migrate} loading={!!migrating}>
-                  {migrating ?? 'Migrar para o cofre'}
+                  {migrating ?? 'Migrar para o Credentials Vault'}
                 </Button>
               </Panel>
             ) : null}
@@ -142,13 +142,13 @@ export function VaultPage() {
             <section aria-labelledby="all-items">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 id="all-items" className="font-display text-[18px] font-semibold tracking-[-0.02em] text-ink">
-                  Itens do cofre
+                  Itens do Credentials Vault
                 </h2>
                 <span className="count">{vault.items.length}</span>
                 <div className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto">
                   <div className="relative flex-1 sm:w-72 sm:flex-none">
                     <MagnifyingGlass size={14} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-tertiary" aria-hidden />
-                    <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nome, nota ou app" aria-label="Procurar no cofre" className="h-8 pl-8 text-[13px]" spellCheck={false} />
+                    <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nome, nota ou app" aria-label="Procurar no Credentials Vault" className="h-8 pl-8 text-[13px]" spellCheck={false} />
                   </div>
                   <FilterChip icon={<Stack size={14} />} label="Tipo" value={kind} allLabel="Todos" options={[{ value: 'secret', label: 'Secrets' }, { value: 'variable', label: 'Variáveis' }]} onChange={setKind} />
                   <FilterChip icon={<Cube size={14} />} label="App" value={appFilter} allLabel="Todas" align="right" options={[...appOptions, { value: 'none', label: 'Sem app ligada' }]} onChange={setAppFilter} />
@@ -160,8 +160,8 @@ export function VaultPage() {
                 ) : rows.length === 0 ? (
                   <EmptyState
                     icon={<Key size={36} weight="thin" />}
-                    title={vault.items.length ? 'Nada encontrado' : 'O cofre está vazio'}
-                    body={vault.items.length ? undefined : 'Cria variáveis e secrets aqui, ou importa um .env. Depois liga-os às apps na ficha de cada uma, separador Ambientes e cofre.'}
+                    title={vault.items.length ? 'Nada encontrado' : 'O Credentials Vault está vazio'}
+                    body={vault.items.length ? undefined : 'Cria variáveis e secrets aqui, ou importa um .env. Depois liga-os às apps na ficha de cada uma, separador Ambientes e Credentials Vault.'}
                   />
                 ) : (
                   <ul className="divide-y divide-hairline">
@@ -192,13 +192,13 @@ export function VaultPage() {
             ? `O valor cifrado é apagado de vez e o item sai de ${(uses.get(del.id) ?? []).map((u) => `${u.app.name} (${u.env.toUpperCase()})`).join(', ')}.`
             : 'O valor cifrado é apagado de vez. Não há forma de o recuperar.'
         }
-        confirmLabel="Apagar do cofre"
+        confirmLabel="Apagar do Credentials Vault"
         danger
         onConfirm={async () => {
           if (!del) return
           await deleteVaultItem(del, apps, actor)
           setDel(null)
-          toast('Item apagado do cofre.')
+          toast('Item apagado do Credentials Vault.')
         }}
       />
     </>

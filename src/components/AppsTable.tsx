@@ -4,13 +4,13 @@ import clsx from 'clsx'
 import { CaretDown, CaretUp, Table } from '@phosphor-icons/react'
 import { ENVS, maturityLabel, priorityLabel, repoAccountLabel, STATUSES, statusLabel } from '../lib/constants'
 import { priorityRank } from '../lib/app-utils'
-import { fmtDate, fmtNumber, fmtRelative, toDate } from '../lib/format'
+import { fmtDate, fmtRelative, toDate } from '../lib/format'
 import type { AgenticApp } from '../lib/types'
 import { AppIcon, PriorityIcon } from './AppCard'
 import { Badge, Dot, EmptyState } from '../components/ui'
 import { STATUS_COLORS } from '../lib/colors'
 
-type SortKey = 'name' | 'status' | 'maturity' | 'priority' | 'owner' | 'goLive' | 'users' | 'updated'
+type SortKey = 'name' | 'status' | 'maturity' | 'priority' | 'owner' | 'goLive' | 'updated'
 
 const statusRank = (a: AgenticApp) => STATUSES.findIndex((s) => s.key === a.status)
 const maturityRank = (a: AgenticApp) => ['poc', 'piloto', 'mvp', 'estavel', 'escala'].indexOf(a.maturity)
@@ -22,7 +22,6 @@ const getters: Record<SortKey, (a: AgenticApp) => string | number> = {
   priority: (a) => priorityRank(a.priority),
   owner: (a) => a.owner.name.toLowerCase(),
   goLive: (a) => a.goLiveDate || '9999',
-  users: (a) => a.activeUsers ?? -1,
   updated: (a) => toDate(a.updatedAt ?? null)?.getTime() ?? 0,
 }
 
@@ -78,9 +77,6 @@ export function AppsTable({ apps, empty }: { apps: AgenticApp[]; empty?: React.R
                     Repositório
                   </th>
                   <Th sort={sort} setSort={setSort} k="goLive">Go-live</Th>
-                  <Th sort={sort} setSort={setSort} k="users" className="text-right">
-                    Utilizadores
-                  </Th>
                   <Th sort={sort} setSort={setSort} k="updated" className="pr-4">
                     Atualizada
                   </Th>
@@ -128,7 +124,6 @@ export function AppsTable({ apps, empty }: { apps: AgenticApp[]; empty?: React.R
                     </td>
                     <td className="px-3.5 py-[11px] whitespace-nowrap text-ink-muted">{a.repo.account ? repoAccountLabel(a.repo.account) : <span className="text-ink-tertiary">Por definir</span>}</td>
                     <td className="px-3.5 py-[11px] font-mono text-[12.5px] whitespace-nowrap text-ink-muted tabular">{fmtDate(a.goLiveDate)}</td>
-                    <td className="px-3.5 py-[11px] text-right font-mono text-[12.5px] text-ink-muted tabular">{fmtNumber(a.activeUsers)}</td>
                     <td className="px-3.5 py-[11px] pr-4 whitespace-nowrap text-ink-subtle" title={fmtDate(a.updatedAt ?? null)}>
                       {fmtRelative(a.updatedAt ?? null)}
                     </td>

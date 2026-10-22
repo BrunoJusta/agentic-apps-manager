@@ -1,6 +1,6 @@
-# Agentic Apps Manager
+# Agentic Hub Manager
 
-App interna da Sogrape (Digital & Data) para gerir todos os projetos de agentic applications num só sítio: um board Kanban por estado, a ficha completa de cada app (equipa, stack, ambientes, BDs, alojamento, repositório, governo) e um cofre de secrets cifrado no browser.
+App interna da Sogrape (Digital & Data) para gerir todos os projetos de agentic applications num só sítio: um board Kanban por estado, a ficha completa de cada app (equipa, stack, ambientes, BDs, alojamento, repositório, governo) e um Credentials Vault de secrets cifrado no browser.
 
 Stack: Vite, React 19, TypeScript, Tailwind v4, Firebase Auth (Microsoft) e Firestore (base de dados `agentic-apps-prod` no projeto `sogrape-ai-studio`). O alojamento é estático na Vercel e não há backend.
 
@@ -38,53 +38,53 @@ A configuração Firebase já vem no código (é pública por desenho). Para a m
 ## 4. Primeiro arranque
 
 1. Entra com `bruno.justa@sogrape.pt`. É o **Admin de arranque**: o documento dele é criado sozinho no primeiro login, e as regras nunca deixam que seja despromovido nem desativado.
-2. Vai a **Cofre → Inicializar o cofre**. Escolhes a tua passphrase pessoal (12 caracteres ou mais). O browser gera as tuas chaves e a chave do cofre, e ficas com o cofre aberto.
-3. Vai a **Utilizadores → Dar acesso** e acrescenta as pessoas (só emails `@sogrape.pt`), com o papel certo. Quem não está nesta lista não entra.
-4. Cada Editor entra, abre o **Cofre** e cria as suas chaves pessoais. Aparece-lhe uma impressão digital (por exemplo `3F2A 91C0 77B1 0D4E`).
-5. Em **Utilizadores**, carregas em **Dar acesso ao cofre** e confirmas com a pessoa que a impressão digital é a mesma. Esse acesso é dado para a chave **daquela** pessoa.
-6. Recomendação: ter sempre **pelo menos 2 Admins com acesso ao cofre**. Se o único Admin esquecer a passphrase, os secrets perdem-se.
+2. Vai a **Credentials Vault → Inicializar o Credentials Vault**. Escolhes a tua passphrase pessoal (12 caracteres ou mais). O browser gera as tuas chaves e a chave do Credentials Vault, e ficas com o Credentials Vault aberto.
+3. Vai a **Access Control → Dar acesso** e acrescenta as pessoas (só emails `@sogrape.pt`), com o papel certo. Quem não está nesta lista não entra.
+4. Cada Editor entra, abre o **Credentials Vault** e cria as suas chaves pessoais. Aparece-lhe uma impressão digital (por exemplo `3F2A 91C0 77B1 0D4E`).
+5. Em **Access Control**, carregas em **Dar acesso ao Credentials Vault** e confirmas com a pessoa que a impressão digital é a mesma. Esse acesso é dado para a chave **daquela** pessoa.
+6. Recomendação: ter sempre **pelo menos 2 Admins com acesso ao Credentials Vault**. Se o único Admin esquecer a passphrase, os secrets perdem-se.
 
 ## 5. Papéis
 
-| Papel  | Board e fichas | Editar apps | Secrets | Utilizadores e rotação |
+| Papel  | Board e fichas | Editar apps | Secrets | Access Control e rotação |
 |--------|----------------|-------------|---------|----------------------------------|
 | Viewer | Sim            | Não         | Nunca (nem os nomes das variáveis e secrets) | Não |
-| Editor | Sim            | Sim         | Se um Admin lhe der acesso ao cofre | Não     |
+| Editor | Sim            | Sim         | Se um Admin lhe der acesso ao Credentials Vault | Não     |
 | Admin  | Sim            | Sim, e apagar | Sim   | Sim                              |
 
 ## 6. Como funciona a segurança
 
 - **Login**: Microsoft, só `@sogrape.pt` e só quem estiver na coleção `users` com `active: true`. Isto é garantido nas regras do Firestore, não só na interface.
-- **Cofre, cifrado no browser**: o Firestore só guarda texto cifrado.
+- **Credentials Vault, cifrado no browser**: o Firestore só guarda texto cifrado.
   - Cada pessoa tem um par de chaves RSA-OAEP 3072. A chave privada é cifrada com AES-256-GCM, com uma chave derivada da passphrase pessoal (PBKDF2-SHA256, 600 000 iterações). A passphrase nunca sai do browser.
-  - Existe uma chave do cofre (AES-256-GCM). Para cada pessoa com acesso, essa chave é embrulhada com a chave pública dela (`vaultGrants/{email}`).
-  - Cada item do cofre (variável ou secret) é cifrado com a chave do cofre, com IV aleatório e AAD igual ao caminho do documento (`vaultItems/{id}`), para que um texto cifrado não possa ser trocado de sítio.
+  - Existe uma chave do Credentials Vault (AES-256-GCM). Para cada pessoa com acesso, essa chave é embrulhada com a chave pública dela (`vaultGrants/{email}`).
+  - Cada item do Credentials Vault (variável ou secret) é cifrado com a chave do Credentials Vault, com IV aleatório e AAD igual ao caminho do documento (`vaultItems/{id}`), para que um texto cifrado não possa ser trocado de sítio.
   - Nem o Firebase, nem a Vercel, nem quem tiver acesso à consola consegue ler os valores.
-- **Bloqueio automático** após 15 minutos sem atividade. Ao recarregar a página, o cofre também volta a bloquear (a chave só vive em memória).
+- **Bloqueio automático** após 15 minutos sem atividade. Ao recarregar a página, o Credentials Vault também volta a bloquear (a chave só vive em memória).
 - **Valores revelados** escondem-se sozinhos após 30 segundos.
 - **Auditoria**: revelar, copiar, exportar, importar, criar, alterar e apagar secrets, dar e retirar acesso, rodar a chave, gerir utilizadores e logins ficam registados na coleção `audit`. Ninguém pode editar nem apagar registos. Para já não há página na app para os consultar; consultam-se na consola do Firebase.
-- **Rotação**: em Utilizadores, "Rodar chave" gera uma chave nova, volta a cifrar todos os secrets e renova os acessos numa única escrita atómica. Faz isto quando alguém que tinha acesso sai da equipa.
-- **Variáveis e secrets vivem só no cofre**, ambos cifrados. As apps guardam apenas a ligação (o id do item) por ambiente; na ficha vê-se o nome, nunca o valor. Valores só se revelam, copiam ou editam na página Cofre.
+- **Rotação**: em Access Control, "Rodar chave" gera uma chave nova, volta a cifrar todos os secrets e renova os acessos numa única escrita atómica. Faz isto quando alguém que tinha acesso sai da equipa.
+- **Variáveis e secrets vivem só no Credentials Vault**, ambos cifrados. As apps guardam apenas a ligação (o id do item) por ambiente; na ficha vê-se o nome, nunca o valor. Valores só se revelam, copiam ou editam na página Credentials Vault.
 
 ## 7. Funcionalidades
 
-- **Apps**: o pipeline em curso, numa só tab com dois modos (Kanban ou Tabela), escolhidos no fim da barra de filtros.
-  - Kanban com as colunas Ideia, Discovery, Em desenvolvimento e QA / UAT, que se ajustam à largura do ecrã. Arrastar um cartão muda o estado; largar na zona "Produção" passa a app para Finalizadas.
+- **Lifecycle Management**: o pipeline em curso, numa só tab com dois modos (Kanban ou Tabela), escolhidos no fim da barra de filtros.
+  - Kanban com as colunas Idea, Discovery, In Development e QA / UAT, que se ajustam à largura do ecrã. Arrastar um cartão muda o estado; largar na zona "Production" passa a app para o Production Portfolio.
   - Pode ser agrupado por estado, maturidade, conta do repositório ou área.
   - Os filtros (maturidade, prioridade, conta do repositório, stack, "as minhas") e o modo ficam no URL, por isso dá para partilhar o link.
-- **Finalizadas**: apps em Produção ou Descontinuadas saem do board e ficam nesta tab, em cartões ou tabela.
+- **Production Portfolio**: apps em Production ou Shelved saem do board e ficam nesta tab, em cartões ou tabela, com filtro Production / Shelved.
 - **Pedidos**: em cada app (sobretudo as que estão em produção) registam-se alterações, updates, novos módulos e bugs, com estado (Novo, Em análise, Em curso, Concluído, Rejeitado), prioridade, quem pediu e data pretendida. Qualquer utilizador ativo regista; Editors e Admins mudam o estado.
 - **Owner**: cada app tem um owner, editado e mostrado em Governance.
-- **Gate de Produção**: uma app só passa para Produção com owner e ambiente de produção (alojamento, URL e BD) preenchidos. O repositório é opcional, porque algumas apps do Google AI Studio têm o código dentro do ambiente Google; nesse caso escolhe a conta "Google AI Studio".
+- **Gate de Production**: uma app só passa para Production com owner e ambiente de produção (alojamento, URL e BD) preenchidos. O repositório é opcional, porque algumas apps do Google AI Studio têm o código dentro do ambiente Google; nesse caso escolhe a conta "Google AI Studio".
 - **URLs da app por ambiente** (DEV, QA, PROD): preenchidos na ficha (Editar, secção Ambientes), aparecem em "URLs da app" na visão geral, como atalhos no topo da ficha e como links na tabela.
-- **Ficha da app** com os separadores Visão geral, Pedidos, Ambientes e cofre (DEV, QA e PROD), Governance e Histórico.
-- **Cofre** (página própria): cria-se aqui cada variável ou secret, com nome, tipo, nota e data de "rodar até" (aviso a 30 dias). Mostra onde cada item está ligado e permite revelar, copiar, editar e apagar. Apagar um item tira-o de todas as apps.
+- **Ficha da app** com os separadores Visão geral, Pedidos, Ambientes e Credentials Vault (DEV, QA e PROD), Governance.
+- **Credentials Vault** (página própria): cria-se aqui cada variável ou secret, com nome, tipo, nota e data de "rodar até" (aviso a 30 dias). Mostra onde cada item está ligado e permite revelar, copiar, editar e apagar. Apagar um item tira-o de todas as apps.
   - Importar um `.env` colado: o parser sugere o que é secret, e os itens podem ficar logo ligados a uma app e ambiente.
   - Um mesmo item pode ser ligado a várias apps (por exemplo, uma chave partilhada). Nomes repetidos são permitidos; a nota serve para os distinguir.
-- **Variáveis e secrets na ficha**: em Ambientes e cofre, "Ligar do cofre" deixa escolher itens pelo nome; "Desligar" tira a ligação sem apagar o item. "Exportar .env" junta os itens ligados a esse ambiente (precisa do cofre aberto, fica registado na auditoria).
-- **Migração**: variáveis e secrets do modelo antigo (dentro de cada app) aparecem num aviso no Cofre; "Migrar para o cofre" cifra-os e liga-os às mesmas apps e ambientes.
-- **Pesquisa global** com Ctrl K ou ⌘K: apps e nomes dos itens do cofre (só para Editors e Admins). Os valores nunca são pesquisáveis.
-- **Importar e exportar JSON** de apps (sem secrets).
+- **Variáveis e secrets na ficha**: em Ambientes e Credentials Vault, "Ligar do Credentials Vault" deixa escolher itens pelo nome; "Desligar" tira a ligação sem apagar o item. "Exportar .env" junta os itens ligados a esse ambiente (precisa do Credentials Vault aberto, fica registado na auditoria).
+- **Migração**: variáveis e secrets do modelo antigo (dentro de cada app) aparecem num aviso no Credentials Vault; "Migrar para o Credentials Vault" cifra-os e liga-os às mesmas apps e ambientes.
+- **Pesquisa global** com Ctrl K ou ⌘K: apps e nomes dos itens do Credentials Vault (só para Editors e Admins). Os valores nunca são pesquisáveis.
+- **Importar JSON** de apps (sem secrets).
 
 ### Linguagem visual
 
@@ -95,13 +95,13 @@ Estilo do backoffice (inspirado no DESIGN.md da Vercel): tinta `#171717` e cinza
 ```
 users/{email}                 perfil, papel, ativo
 userKeys/{email}              chave pública + chave privada cifrada com a passphrase
-vault/meta                    versão da chave do cofre + bloco de verificação
-vaultGrants/{email}           chave do cofre embrulhada para essa pessoa
-apps/{appId}                  ficha da app (ambientes com as ligações ao cofre em vaultRefs)
+vault/meta                    versão da chave do Credentials Vault + bloco de verificação
+vaultGrants/{email}           chave do Credentials Vault embrulhada para essa pessoa
+apps/{appId}                  ficha da app (ambientes com as ligações ao Credentials Vault em vaultRefs)
 vaultItems/{id}               variável ou secret: nome, tipo, nota, rodar até, iv, ct (cifrado)
-apps/{appId}/secrets/{id}     antigo: só existe até ser migrado para o cofre
+apps/{appId}/secrets/{id}     antigo: só existe até ser migrado para o Credentials Vault
 apps/{appId}/requests/{id}    pedidos (alterações, updates, novos módulos, bugs)
-apps/{appId}/history/{id}     histórico de alterações
+apps/{appId}/history/{id}     antigo: histórico, já não é escrito nem mostrado
 audit/{id}                    registo de auditoria (só acrescentar)
 ```
 
@@ -116,6 +116,6 @@ npm run test:rules
 ## 10. Limites conhecidos
 
 - Se alguém esquecer a passphrase, não há recuperação. A pessoa repõe as chaves e um Admin volta a dar acesso. Os secrets não se perdem enquanto houver outra pessoa com acesso.
-- A rotação atómica suporta até cerca de 500 escritas (itens do cofre + acessos) numa só operação.
+- A rotação atómica suporta até cerca de 500 escritas (itens do Credentials Vault + acessos) numa só operação.
 - Ao copiar um secret, a app não consegue limpar a área de transferência do sistema depois.
 - O login depende de a conta Microsoft ter o email preenchido (as contas da Sogrape têm).

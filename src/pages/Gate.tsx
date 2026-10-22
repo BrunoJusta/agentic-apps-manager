@@ -44,7 +44,7 @@ export function LoginScreen() {
       <div className="enter relative z-10 w-full max-w-[400px]">
         <div className="flex items-center gap-2.5">
           <BrandMark />
-          <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Apps</span>
+          <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Hub</span>
         </div>
         <div className="mt-8 rounded-modal bg-surface-1 p-6 shadow-panel sm:p-8">
           <h1 className="font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink">Entrar</h1>
