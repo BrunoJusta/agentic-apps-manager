@@ -42,13 +42,14 @@ export function LoginScreen() {
         <span className="login-blob b2" />
         <span className="login-blob b3" />
       </div>
-      <div className="enter relative z-10 w-full max-w-[400px]">
-        <div className="flex items-center gap-2.5">
-          <BrandMark />
-          <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Hub</span>
-        </div>
-        <div className="mt-8 rounded-modal bg-surface-1 p-6 shadow-panel sm:p-8">
-          <h1 className="font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink">Entrar</h1>
+      <div className="enter relative z-10 flex w-full max-w-[400px] flex-col items-center">
+        <img src="/logo-sogrape.svg" alt="Sogrape" width={176} height={60} className="h-[60px] w-auto" />
+        <div className="mt-10 w-full rounded-modal bg-surface-1 p-6 shadow-panel sm:p-8">
+          <div className="flex items-center gap-2.5">
+            <BrandMark />
+            <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Hub</span>
+          </div>
+          <h1 className="mt-6 font-display text-[26px] leading-8 font-semibold tracking-[-0.03em] text-ink">Entrar</h1>
           <p className="mt-2 text-sm text-ink-subtle">Usa a tua conta Sogrape para continuar.</p>
           <Button
             variant="primary"
