@@ -42,14 +42,12 @@ export function LoginScreen() {
         <span className="login-blob b2" />
         <span className="login-blob b3" />
       </div>
-      <div className="enter relative z-10 w-full max-w-[420px]">
-        <div className="w-full rounded-modal bg-surface-1 px-6 py-8 shadow-panel sm:px-9 sm:py-11">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <BrandMark />
-              <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Hub</span>
-            </div>
-            <img src="/logo-sogrape.svg" alt="Sogrape" width={106} height={36} className="h-9 w-auto shrink-0" />
+      <div className="enter relative z-10 flex w-full max-w-[420px] flex-col items-center">
+        <img src="/logo-sogrape.svg" alt="Sogrape" width={176} height={60} className="h-[60px] w-auto" />
+        <div className="mt-10 w-full rounded-modal bg-surface-1 px-6 py-8 shadow-panel sm:px-9 sm:py-11">
+          <div className="flex items-center gap-2.5">
+            <BrandMark />
+            <span className="font-display text-[15px] font-semibold tracking-[-0.02em] text-ink">Agentic Hub</span>
           </div>
           <h1 className="mt-12 font-display text-[28px] leading-9 font-semibold tracking-[-0.03em] text-ink">Entrar</h1>
           <p className="mt-2 text-sm text-ink-subtle">Usa a tua conta Sogrape para continuar.</p>
